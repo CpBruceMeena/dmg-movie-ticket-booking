@@ -52,21 +52,45 @@ class BookingServiceTest {
     private UserRepository userRepository;
 
     private Show testShow;
-    private String userId = "testuser";
+    private Long userId;
+    private Long userId1;
+    private Long userId2;
 
     @BeforeEach
     void setUp() {
-        // Create a test user for booking ownership
-        if (!userRepository.existsByUsername("testuser")) {
-            userRepository.save(User.builder()
-                    .username("testuser")
-                    .email("testuser@test.com")
-                    .password("encoded")
-                    .fullName("Test User")
-                    .role(Role.ROLE_CUSTOMER)
-                    .active(true)
-                    .build());
-        }
+        // Create test users for booking ownership
+        User user = userRepository.findByUsername("testuser").orElseGet(() ->
+                userRepository.save(User.builder()
+                        .username("testuser")
+                        .email("testuser@test.com")
+                        .password("encoded")
+                        .fullName("Test User")
+                        .role(Role.ROLE_CUSTOMER)
+                        .active(true)
+                        .build()));
+        userId = user.getId();
+
+        User user1 = userRepository.findByUsername("customer1").orElseGet(() ->
+                userRepository.save(User.builder()
+                        .username("customer1")
+                        .email("customer1@test.com")
+                        .password("encoded")
+                        .fullName("Customer One")
+                        .role(Role.ROLE_CUSTOMER)
+                        .active(true)
+                        .build()));
+        userId1 = user1.getId();
+
+        User user2 = userRepository.findByUsername("customer2").orElseGet(() ->
+                userRepository.save(User.builder()
+                        .username("customer2")
+                        .email("customer2@test.com")
+                        .password("encoded")
+                        .fullName("Customer Two")
+                        .role(Role.ROLE_CUSTOMER)
+                        .active(true)
+                        .build()));
+        userId2 = user2.getId();
 
         // Create test data: City -> Theater -> Screen -> Seats -> Show
         City city = cityRepository.save(City.builder().name("Test City").build());
@@ -142,14 +166,14 @@ class BookingServiceTest {
         bookingService.holdSeats(BookingRequest.builder()
                 .showId(testShow.getId())
                 .seatIds(seatIds)
-                .build(), "user1");
+                .build(), userId1);
 
         // Second hold by user2 should fail
         assertThrows(BookingConflictException.class,
                 () -> bookingService.holdSeats(BookingRequest.builder()
                         .showId(testShow.getId())
                         .seatIds(seatIds)
-                        .build(), "user2"));
+                        .build(), userId2));
     }
 
     @Test
@@ -234,13 +258,13 @@ class BookingServiceTest {
         // Hold seats 1,2
         bookingService.holdSeats(
                 BookingRequest.builder().showId(testShow.getId()).seatIds(Set.of(seat1.getId(), seat2.getId())).build(),
-                "customer1");
+                userId1);
 
         // Hold and pay for seat 3
         BookingResponse held = bookingService.holdSeats(
                 BookingRequest.builder().showId(testShow.getId()).seatIds(Set.of(seat3.getId())).build(),
-                "customer2");
-        bookingService.processPayment(held.getId(), "customer2");
+                userId2);
+        bookingService.processPayment(held.getId(), userId2);
 
         // Check availability
         List<SeatAvailabilityResponse> availability = bookingService.getSeatAvailability(testShow.getId());

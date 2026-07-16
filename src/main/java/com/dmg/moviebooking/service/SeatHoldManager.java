@@ -14,11 +14,11 @@ public interface SeatHoldManager {
      *
      * @param showId   the show the seats belong to
      * @param seatIds  the seats to hold
-     * @param userId   the user holding the seats
+     * @param userId   the user ID holding the seats
      * @param durationMinutes how long to hold the seats (e.g. 5 minutes)
      * @return true if all seats were successfully held, false if any were already held by another user
      */
-    boolean holdSeats(Long showId, Set<Long> seatIds, String userId, int durationMinutes);
+    boolean holdSeats(Long showId, Set<Long> seatIds, Long userId, int durationMinutes);
 
     /**
      * Release a held seat (after payment timeout, cancellation, or successful payment).
@@ -28,17 +28,17 @@ public interface SeatHoldManager {
     /**
      * Release all seats held by a user for a specific show.
      */
-    void releaseSeatsByUser(Long showId, String userId);
+    void releaseSeatsByUser(Long showId, Long userId);
 
     /**
      * Check if a specific seat is currently held by another user.
      */
-    boolean isSeatHeld(Long showId, Long seatId, String excludeUserId);
+    boolean isSeatHeld(Long showId, Long seatId, Long excludeUserId);
 
     /**
      * Get the set of seat IDs held by a user for a show.
      */
-    Set<Long> getHeldSeatsByUser(Long showId, String userId);
+    Set<Long> getHeldSeatsByUser(Long showId, Long userId);
 
     /**
      * Get the set of all held seat IDs for a show (across all users).
@@ -51,14 +51,14 @@ public interface SeatHoldManager {
     LocalDateTime getHoldExpiry(Long showId, Long seatId);
 
     /**
-     * Get the user holding a specific seat.
+     * Get the user ID holding a specific seat.
      */
-    String getHoldingUser(Long showId, Long seatId);
+    Long getHoldingUser(Long showId, Long seatId);
 
     /**
      * Extend the hold duration for a set of seats (e.g. when payment is initiated).
      */
-    boolean extendHold(Long showId, Set<Long> seatIds, String userId, int additionalMinutes);
+    boolean extendHold(Long showId, Set<Long> seatIds, Long userId, int additionalMinutes);
 
     /**
      * Clean up all expired holds.

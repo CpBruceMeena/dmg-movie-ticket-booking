@@ -18,7 +18,6 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -28,7 +27,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -129,7 +127,7 @@ public class BookingService {
      * If seats can't be held (already held by another user), throws BookingConflictException.
      */
     @CacheEvict(value = "seats", allEntries = true)
-    public BookingResponse holdSeats(BookingRequest request, String userId) {
+    public BookingResponse holdSeats(BookingRequest request, Long userId) {
         Show show = getShowEntity(request.getShowId());
         List<Seat> seats = seatRepository.findAllById(request.getSeatIds());
 
@@ -179,6 +177,7 @@ public class BookingService {
         log.info("Booking {} created for user '{}' on show {} with {} seats (hold expires: {})",
                 savedBooking.getId(), userId, request.getShowId(), seats.size(), holdExpiresAt);
 
+
         return toResponse(savedBooking, show);
     }
 
@@ -187,7 +186,7 @@ public class BookingService {
      * If expired, releases the seats and throws PaymentTimeoutException.
      */
     @CacheEvict(value = "seats", allEntries = true)
-    public BookingResponse processPayment(Long bookingId, String userId) {
+    public BookingResponse processPayment(Long bookingId, Long userId) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", bookingId));
 
@@ -214,7 +213,7 @@ public class BookingService {
         bookingRepository.save(booking);
 
         Show show = getShowEntity(booking.getShowId());
-        log.info("Booking {} confirmed with payment for user '{}'", bookingId, userId);
+        log.info("Booking {} confirmed with payment for user id '{}'", bookingId, userId);
 
         return toResponse(booking, show);
     }
@@ -223,7 +222,7 @@ public class BookingService {
      * Cancel a booking and release the seats.
      */
     @CacheEvict(value = "seats", allEntries = true)
-    public BookingResponse cancelBooking(Long bookingId, String userId) {
+    public BookingResponse cancelBooking(Long bookingId, Long userId) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", bookingId));
 
@@ -245,7 +244,7 @@ public class BookingService {
         bookingRepository.save(booking);
 
         Show show = getShowEntity(booking.getShowId());
-        log.info("Booking {} cancelled by user '{}'", bookingId, userId);
+        log.info("Booking {} cancelled by user id '{}'", bookingId, userId);
 
         return toResponse(booking, show);
     }
@@ -254,7 +253,7 @@ public class BookingService {
      * Get booking history for the current user.
      */
     @Transactional(readOnly = true)
-    public List<BookingResponse> getBookingHistory(String userId) {
+    public List<BookingResponse> getBookingHistory(Long userId) {
         return bookingRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(booking -> {
                     Show show = showService.getShowEntity(booking.getShowId());
@@ -267,7 +266,7 @@ public class BookingService {
      * Get a single booking by ID and verify ownership.
      */
     @Transactional(readOnly = true)
-    public BookingResponse getBookingById(Long bookingId, String userId) {
+    public BookingResponse getBookingById(Long bookingId, Long userId) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", bookingId));
         validateOwnership(booking, userId);
@@ -298,7 +297,7 @@ public class BookingService {
         return showService.getShowEntity(showId);
     }
 
-    private void validateOwnership(Booking booking, String userId) {
+    private void validateOwnership(Booking booking, Long userId) {
         if (!booking.getUserId().equals(userId)) {
             throw new InvalidBookingStateException("Booking does not belong to this user");
         }
