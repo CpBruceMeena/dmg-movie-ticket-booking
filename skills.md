@@ -1,56 +1,173 @@
-# Skills.md — Skills Used
+# Skills.md — Java & Spring Boot Development Skills
 
-> This document catalogs the AI skills leveraged during the development of the DMG Movie Ticket Booking System.
-
----
-
-## What Are Skills?
-
-Skills are reusable, self-contained instruction sets that enable AI agents to perform specific tasks effectively. Each skill encapsulates domain knowledge, best practices, and behavioral guidelines for a particular area.
+> This document catalogs the technical skills, tools, and practices required for the DMG Movie Ticket Booking System development.
 
 ---
 
-## Skills Used in This Project
+## Technology Stack
 
-### Core Development Skills
-
-| Skill | Purpose |
-|-------|---------|
-| **Spring Boot Development** | Building REST APIs, entity modeling, JPA repositories, service layer, security configuration. |
-| **REST API Design** | Designing clean, consistent, and well-documented RESTful endpoints following industry standards. |
-| **Database Modeling** | Entity-relationship design, JPA annotations, schema generation, query optimization. |
-| **Exception Handling** | Consistent error handling with Spring's `@ControllerAdvice` and meaningful HTTP status codes. |
-| **Input Validation** | Using Jakarta Bean Validation (`@Valid`, custom validators) for request payload validation. |
-
-### Quality Assurance Skills
-
-| Skill | Purpose |
-|-------|---------|
-| **Unit Testing (JUnit 5)** | Writing thorough unit tests for services, utilities, and edge cases. |
-| **Integration Testing** | Testing controller endpoints, security rules, and database interactions with `@SpringBootTest`. |
-| **Code Review** | Systematic review of code changes for correctness, style, and edge cases. |
-
-### AI Workflow Skills
-
-| Skill | Purpose |
-|-------|---------|
-| **Orchestration** | Coordinating multiple AI agents in parallel, managing dependencies between them. |
-| **Context Management** | Maintaining relevant context across conversations, pruning when necessary. |
-| **Research & Discovery** | Using web search and documentation reading to find the best tools and patterns. |
+| Technology | Version |
+|-----------|---------|
+| **Java** | 17 (LTS) |
+| **Spring Boot** | 3.2.0 |
+| **Maven** | 3.8+ |
+| **H2 Database** | (in-memory) |
+| **SpringDoc OpenAPI** | 2.3.0 |
 
 ---
 
-## Skill Installation & Usage
+## Core Java Skills (Java 17)
 
-Community skills can be discovered and installed via:
+### Language Features
+- **Records**: Use for immutable DTOs and data carriers.
+  ```java
+  public record BookingResponse(Long id, String status, List<SeatInfo> seats) {}
+  ```
+- **Sealed Classes**: Use for constrained domain hierarchies like booking states or seat types.
+- **Pattern Matching for `instanceof`**: Simplify type checks in equals/hashCode or visitor patterns.
+- **Text Blocks**: Use for multi-line SQL queries, JSON templates, or rich log messages.
+- **Switch Expressions**: Prefer over traditional switch statements for enum-based logic.
+- **Streams & Optional**: Use declaratively for collection processing and nullable values.
 
-```bash
-npx skills find <query>     # Search for skills
-npx skills add <owner/repo> --list           # Preview available skills
-npx skills add <owner/repo> --skill <name>   # Install a skill
+### Exception Handling
+- Define domain-specific exceptions extending `RuntimeException`.
+- Use `@ControllerAdvice` with `@ExceptionHandler` for consistent error responses.
+- Never swallow exceptions — always log and re-throw or translate appropriately.
+
+---
+
+## Spring Boot Skills
+
+### Project Setup & Configuration
+- Use `spring-boot-starter-parent` as the Maven parent POM.
+- Externalize all configurable values in `application.properties` or `application.yml`.
+- Use `@ConfigurationProperties` for grouped configuration binding.
+
+### REST API Development (`spring-boot-starter-web`)
+- Annotate controllers with `@RestController` and `@RequestMapping("/api/...")`.
+- Use `@Valid` + `@Validated` for request body validation with Jakarta Bean Validation annotations.
+- Return `ResponseEntity<T>` for fine-grained HTTP status control.
+- Document all endpoints with SpringDoc annotations: `@Operation`, `@ApiResponse`, `@Schema`.
+
+Example:
+```java
+@RestController
+@RequestMapping("/api/admin/cities")
+public class CityController {
+
+    @PostMapping
+    @Operation(summary = "Create a new city", tags = "Admin - Cities")
+    @ApiResponse(responseCode = "201", description = "City created successfully")
+    public ResponseEntity<CityResponse> createCity(@Valid @RequestBody CityRequest request) {
+        // ...
+    }
+}
 ```
 
-Installed skills are stored in `.agents/skills/` and loaded by name during agent sessions.
+### Data Access (`spring-boot-starter-data-jpa`)
+- Define entities with `@Entity`, `@Table`, `@Id`, `@GeneratedValue`.
+- Use Lombok `@Data`, `@NoArgsConstructor`, `@AllArgsConstructor`, `@Builder` on entities.
+- Create repositories extending `JpaRepository<Entity, IdType>`.
+- Use `@Lock(PESSIMISTIC_WRITE)` for concurrency-sensitive operations.
+- Use `@Query` for custom JPQL queries; derive queries from method names where possible.
+
+### Security (`spring-boot-starter-security`)
+- Configure `SecurityFilterChain` bean with endpoint-specific rules.
+- Use role-based access with `hasRole("ADMIN")` / `hasRole("CUSTOMER")`.
+- Use in-memory `UserDetailsService` for development (no OAuth/SSO in scope).
+- CSRF can be disabled for REST APIs.
+
+### Validation (`spring-boot-starter-validation`)
+- Use Jakarta annotations: `@NotBlank`, `@NotNull`, `@Size`, `@Min`, `@Max`, `@Email`.
+- Create custom validators by implementing `ConstraintValidator` for domain-specific rules.
+- Group validation constraints where different validation rules apply per operation (create vs update).
+
+### Testing
+- **Unit Tests**: JUnit 5 + Mockito for service-layer logic. Mock all dependencies.
+- **Integration Tests**: `@SpringBootTest` + `@AutoConfigureMockMvc` for controller testing.
+- **Repository Tests**: `@DataJpaTest` for repository layer with embedded database.
+- **Security Tests**: `@WithMockUser` for testing role-based access on endpoints.
+- **Concurrency Tests**: Use `ExecutorService` + `CountDownLatch` to simulate concurrent booking scenarios.
+
+---
+
+## Maven Skills
+
+### Build Configuration
+- Define properties: `<java.version>17</java.version>`
+- Use `spring-boot-maven-plugin` for executable JAR packaging.
+- Exclude Lombok from the final artifact via plugin configuration.
+
+### Dependency Management
+- Let Spring Boot manage dependency versions via the parent POM.
+- Add SpringDoc OpenAPI for Swagger UI:
+  ```xml
+  <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <version>2.3.0</version>
+  </dependency>
+  ```
+
+---
+
+## Database & Data Modeling Skills
+
+### Entity Design Principles
+- Each entity gets: `@Entity`, `@Table(name = "...")`, `@Id`, `@GeneratedValue(strategy = IDENTITY)`.
+- Use `@Enumerated(EnumType.STRING)` for enum fields.
+- Define bidirectional relationships explicitly with `mappedBy`.
+- Use `@CreationTimestamp` / `@UpdateTimestamp` for audit timestamps.
+
+### Concurrency Strategy
+- Use `@Version` (optimistic locking) for entities with low contention.
+- Use `@Lock(PESSIMISTIC_WRITE)` on repository methods for seat allocation to prevent double-booking.
+- Keep hold durations short and auto-release expired holds via scheduled tasks (`@Scheduled`).
+
+### Indexing
+- Add `@Index` annotations on frequently queried columns (e.g., `show_id`, `user_id`, `status`).
+
+---
+
+## API Design Skills
+
+### RESTful Principles
+- Use nouns for resources: `/cities`, `/theaters`, `/shows`, `/bookings`.
+- Use HTTP methods semantically: POST (create), GET (read), PUT (update), DELETE (delete).
+- Use query parameters for filtering, sorting, and pagination.
+- Return appropriate HTTP status codes: 201 (created), 200 (success), 400 (bad request), 404 (not found), 409 (conflict).
+
+### Error Response Format
+```json
+{
+    "status": 400,
+    "error": "Bad Request",
+    "message": "City name must not be blank",
+    "path": "/api/admin/cities",
+    "timestamp": "2026-07-16T12:00:00Z"
+}
+```
+
+### Pagination
+- Accept `page` (0-indexed) and `size` query parameters.
+- Return Spring's `Page<T>` wrapped in a consistent response envelope.
+
+---
+
+## Development Practices
+
+### Git Workflow
+- Feature branches off `main`.
+- No direct commits or pushes to `main` (enforced by Git hooks in `.githooks/`).
+- Descriptive commit messages with conventional commit prefixes.
+- Pull requests for all changes.
+
+### Code Quality
+- Run `mvn compile` before committing to ensure compilation.
+- Run `mvn test` to verify all tests pass.
+- Keep methods small and focused (single responsibility).
+- Write tests for all public service methods and controller endpoints.
+- Maintain at least 80% test coverage on service and controller layers.
 
 ---
 
