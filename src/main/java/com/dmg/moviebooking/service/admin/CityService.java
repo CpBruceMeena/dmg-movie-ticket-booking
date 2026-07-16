@@ -84,9 +84,4 @@ public class CityService {
                 .updatedAt(city.getUpdatedAt())
                 .build();
     }
-
-    public City getCityEntity(Long id) {
-        return cityRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("City", id));
-    }
 }

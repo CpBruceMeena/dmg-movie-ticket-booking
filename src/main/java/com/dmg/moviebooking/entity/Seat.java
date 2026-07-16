@@ -31,9 +31,8 @@ public class Seat {
     @Column(name = "seat_type", nullable = false)
     private SeatType seatType;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "screen_id", nullable = false)
-    private Screen screen;
+    @Column(name = "screen_id", nullable = false)
+    private Long screenId;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

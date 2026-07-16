@@ -7,8 +7,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
 @Table(name = "shows")
@@ -35,18 +33,8 @@ public class Show {
     @Column(name = "base_price", nullable = false, precision = 10, scale = 2)
     private BigDecimal basePrice;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "screen_id", nullable = false)
-    private Screen screen;
-
-    @ManyToMany(fetch = FetchType.LAZY)
-    @JoinTable(
-            name = "show_pricing_tiers",
-            joinColumns = @JoinColumn(name = "show_id"),
-            inverseJoinColumns = @JoinColumn(name = "pricing_tier_id")
-    )
-    @Builder.Default
-    private Set<PricingTier> pricingTiers = new HashSet<>();
+    @Column(name = "screen_id", nullable = false)
+    private Long screenId;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

@@ -6,8 +6,6 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Entity
 @Table(name = "theaters")
@@ -28,13 +26,8 @@ public class Theater {
     @Column(nullable = false)
     private String location;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "city_id", nullable = false)
-    private City city;
-
-    @OneToMany(mappedBy = "theater", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<Screen> screens = new ArrayList<>();
+    @Column(name = "city_id", nullable = false)
+    private Long cityId;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

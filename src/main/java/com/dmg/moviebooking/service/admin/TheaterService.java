@@ -6,6 +6,7 @@ import com.dmg.moviebooking.entity.City;
 import com.dmg.moviebooking.entity.Theater;
 import com.dmg.moviebooking.exception.DuplicateResourceException;
 import com.dmg.moviebooking.exception.ResourceNotFoundException;
+import com.dmg.moviebooking.repository.CityRepository;
 import com.dmg.moviebooking.repository.TheaterRepository;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -19,16 +20,19 @@ import java.util.List;
 public class TheaterService {
 
     private final TheaterRepository theaterRepository;
-    private final CityService cityService;
+    private final CityRepository cityRepository;
 
-    public TheaterService(TheaterRepository theaterRepository, CityService cityService) {
+    public TheaterService(TheaterRepository theaterRepository, CityRepository cityRepository) {
         this.theaterRepository = theaterRepository;
-        this.cityService = cityService;
+        this.cityRepository = cityRepository;
     }
 
     @CacheEvict(value = "theaters", allEntries = true)
     public TheaterResponse createTheater(TheaterRequest request) {
-        City city = cityService.getCityEntity(request.getCityId());
+        // Validate city exists
+        if (!cityRepository.existsById(request.getCityId())) {
+            throw new ResourceNotFoundException("City", request.getCityId());
+        }
 
         if (theaterRepository.existsByNameAndCityId(request.getName(), request.getCityId())) {
             throw new DuplicateResourceException(
@@ -38,7 +42,7 @@ public class TheaterService {
         Theater theater = Theater.builder()
                 .name(request.getName())
                 .location(request.getLocation())
-                .city(city)
+                .cityId(request.getCityId())
                 .build();
 
         theater = theaterRepository.save(theater);
@@ -48,7 +52,6 @@ public class TheaterService {
     @Cacheable(value = "theaters", key = "#cityId")
     @Transactional(readOnly = true)
     public List<TheaterResponse> getTheatersByCityId(Long cityId) {
-        cityService.getCityEntity(cityId); // validate city exists
         return theaterRepository.findByCityId(cityId).stream()
                 .map(this::toResponse)
                 .toList();
@@ -68,12 +71,16 @@ public class TheaterService {
     }
 
     private TheaterResponse toResponse(Theater theater) {
+        String cityName = cityRepository.findById(theater.getCityId())
+                .map(City::getName)
+                .orElse("Unknown");
+
         return TheaterResponse.builder()
                 .id(theater.getId())
                 .name(theater.getName())
                 .location(theater.getLocation())
-                .cityId(theater.getCity().getId())
-                .cityName(theater.getCity().getName())
+                .cityId(theater.getCityId())
+                .cityName(cityName)
                 .createdAt(theater.getCreatedAt())
                 .updatedAt(theater.getUpdatedAt())
                 .build();
