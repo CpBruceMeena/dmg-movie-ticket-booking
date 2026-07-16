@@ -22,6 +22,7 @@ This directory contains architecture diagrams for the DMG Movie Ticket Booking S
 | **Authentication Flow** | [`diagrams/sequence-auth-flow.drawio`](diagrams/sequence-auth-flow.drawio) | User login with JWT token generation via `POST /api/auth/login` |
 | **City-Theater-Screen Setup** | [`diagrams/sequence-city-theater-setup.drawio`](diagrams/sequence-city-theater-setup.drawio) | Admin creates city, then theater with city validation |
 | **Show Management Flow** | [`diagrams/sequence-show-management.drawio`](diagrams/sequence-show-management.drawio) | Admin creates a show with screen assignment, pricing tiers, and overlap validation |
+| **Customer Booking Flow** | [`diagrams/sequence-booking-flow.drawio`](diagrams/sequence-booking-flow.drawio) | Customer browses shows, views seat availability, holds seats (5-min payment window), and pays |
 
 ## Viewing Diagrams
 

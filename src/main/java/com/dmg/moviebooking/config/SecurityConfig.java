@@ -35,15 +35,16 @@ public class SecurityConfig {
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        // Public endpoints
+                        // Public endpoints (no auth required)
                         .requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers("/api/shows", "/api/shows/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/h2-console/**").permitAll()
 
                         // Admin-only endpoints
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                        // Customer endpoints (to be implemented later)
-                        .requestMatchers("/api/cities", "/api/theaters", "/api/shows/**").hasAnyRole("ADMIN", "CUSTOMER")
+                        // Customer endpoints (authenticated)
+                        .requestMatchers("/api/cities", "/api/theaters").hasAnyRole("ADMIN", "CUSTOMER")
                         .requestMatchers("/api/bookings/**").hasAnyRole("ADMIN", "CUSTOMER")
 
                         // Catch-all: require authentication
