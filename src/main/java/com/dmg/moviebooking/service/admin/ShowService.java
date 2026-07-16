@@ -5,15 +5,18 @@ import com.dmg.moviebooking.dto.response.ShowResponse;
 import com.dmg.moviebooking.entity.PricingTier;
 import com.dmg.moviebooking.entity.Screen;
 import com.dmg.moviebooking.entity.Show;
+import com.dmg.moviebooking.entity.ShowPricingTier;
 import com.dmg.moviebooking.exception.ResourceNotFoundException;
 import com.dmg.moviebooking.repository.PricingTierRepository;
+import com.dmg.moviebooking.repository.ScreenRepository;
+import com.dmg.moviebooking.repository.ShowPricingTierRepository;
 import com.dmg.moviebooking.repository.ShowRepository;
+import com.dmg.moviebooking.repository.TheaterRepository;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -23,19 +26,29 @@ import java.util.stream.Collectors;
 public class ShowService {
 
     private final ShowRepository showRepository;
-    private final ScreenService screenService;
+    private final ScreenRepository screenRepository;
+    private final TheaterRepository theaterRepository;
     private final PricingTierRepository pricingTierRepository;
+    private final ShowPricingTierRepository showPricingTierRepository;
 
-    public ShowService(ShowRepository showRepository, ScreenService screenService,
-                       PricingTierRepository pricingTierRepository) {
+    public ShowService(ShowRepository showRepository,
+                       ScreenRepository screenRepository,
+                       TheaterRepository theaterRepository,
+                       PricingTierRepository pricingTierRepository,
+                       ShowPricingTierRepository showPricingTierRepository) {
         this.showRepository = showRepository;
-        this.screenService = screenService;
+        this.screenRepository = screenRepository;
+        this.theaterRepository = theaterRepository;
         this.pricingTierRepository = pricingTierRepository;
+        this.showPricingTierRepository = showPricingTierRepository;
     }
 
     @CacheEvict(value = "shows", allEntries = true)
     public ShowResponse createShow(ShowRequest request) {
-        Screen screen = screenService.getScreenEntity(request.getScreenId());
+        // Validate screen exists
+        if (!screenRepository.existsById(request.getScreenId())) {
+            throw new ResourceNotFoundException("Screen", request.getScreenId());
+        }
 
         if (!request.getEndTime().isAfter(request.getStartTime())) {
             throw new IllegalArgumentException("End time must be after start time");
@@ -46,31 +59,40 @@ public class ShowService {
                 .startTime(request.getStartTime())
                 .endTime(request.getEndTime())
                 .basePrice(request.getBasePrice())
-                .screen(screen)
+                .screenId(request.getScreenId())
                 .build();
 
+        show = showRepository.save(show);
+
+        // Save pricing tier associations as ShowPricingTier records
         if (request.getPricingTierIds() != null && !request.getPricingTierIds().isEmpty()) {
-            Set<PricingTier> tiers = new HashSet<>(pricingTierRepository.findAllById(request.getPricingTierIds()));
-            show.setPricingTiers(tiers);
+            for (Long tierId : request.getPricingTierIds()) {
+                ShowPricingTier spt = ShowPricingTier.builder()
+                        .showId(show.getId())
+                        .pricingTierId(tierId)
+                        .build();
+                showPricingTierRepository.save(spt);
+            }
         }
 
-        show = showRepository.save(show);
         return toResponse(show);
     }
 
     @Cacheable(value = "shows", key = "'screen-' + #screenId")
     @Transactional(readOnly = true)
     public List<ShowResponse> getShowsByScreenId(Long screenId) {
-        screenService.getScreenEntity(screenId); // validate screen exists
         return showRepository.findByScreenId(screenId).stream()
                 .map(this::toResponse)
                 .toList();
     }
 
-    @Cacheable(value = "shows", key = "'theater-' + #theaterId")
     @Transactional(readOnly = true)
     public List<ShowResponse> getShowsByTheaterId(Long theaterId) {
-        return showRepository.findByTheaterId(theaterId).stream()
+        List<Long> screenIds = screenRepository.findByTheaterId(theaterId).stream()
+                .map(Screen::getId)
+                .toList();
+        return showRepository.findAll().stream()
+                .filter(s -> screenIds.contains(s.getScreenId()))
                 .map(this::toResponse)
                 .toList();
     }
@@ -96,16 +118,31 @@ public class ShowService {
     }
 
     private ShowResponse toResponse(Show show) {
+        String screenName = screenRepository.findById(show.getScreenId())
+                .map(Screen::getName)
+                .orElse("Unknown");
+
+        // Look up theater name via screen
+        String theaterName = screenRepository.findById(show.getScreenId())
+                .flatMap(screen -> theaterRepository.findById(screen.getTheaterId()))
+                .map(theater -> theater.getName())
+                .orElse("Unknown");
+
+        Set<Long> pricingTierIds = showPricingTierRepository.findByShowId(show.getId())
+                .stream()
+                .map(ShowPricingTier::getPricingTierId)
+                .collect(Collectors.toSet());
+
         return ShowResponse.builder()
                 .id(show.getId())
                 .movieTitle(show.getMovieTitle())
                 .startTime(show.getStartTime())
                 .endTime(show.getEndTime())
                 .basePrice(show.getBasePrice())
-                .screenId(show.getScreen().getId())
-                .screenName(show.getScreen().getName())
-                .theaterName(show.getScreen().getTheater().getName())
-                .pricingTierIds(show.getPricingTiers().stream().map(PricingTier::getId).collect(Collectors.toSet()))
+                .screenId(show.getScreenId())
+                .screenName(screenName)
+                .theaterName(theaterName)
+                .pricingTierIds(pricingTierIds)
                 .createdAt(show.getCreatedAt())
                 .updatedAt(show.getUpdatedAt())
                 .build();

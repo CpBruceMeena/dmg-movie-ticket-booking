@@ -10,7 +10,7 @@ import java.util.List;
 
 @Repository
 public interface BookingRepository extends JpaRepository<Booking, Long> {
-    List<Booking> findByUser_IdOrderByCreatedAtDesc(Long userId);
+    List<Booking> findByUserIdOrderByCreatedAtDesc(Long userId);
 
     List<Booking> findByShowIdAndStatus(Long showId, BookingStatus status);
 

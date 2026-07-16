@@ -13,10 +13,7 @@ import java.util.List;
 public interface ShowRepository extends JpaRepository<Show, Long> {
     List<Show> findByScreenId(Long screenId);
 
-    @Query("SELECT s FROM Show s JOIN s.screen sc JOIN sc.theater t WHERE t.id = :theaterId")
-    List<Show> findByTheaterId(@Param("theaterId") Long theaterId);
-
-    @Query("SELECT s FROM Show s WHERE s.screen.id = :screenId AND s.startTime >= :from AND s.endTime <= :to")
+    @Query("SELECT s FROM Show s WHERE s.screenId = :screenId AND s.startTime >= :from AND s.endTime <= :to")
     List<Show> findByScreenAndTimeRange(@Param("screenId") Long screenId,
                                         @Param("from") LocalDateTime from,
                                         @Param("to") LocalDateTime to);

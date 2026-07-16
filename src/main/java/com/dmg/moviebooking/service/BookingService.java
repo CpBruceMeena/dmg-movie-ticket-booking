@@ -9,10 +9,7 @@ import com.dmg.moviebooking.exception.BookingConflictException;
 import com.dmg.moviebooking.exception.InvalidBookingStateException;
 import com.dmg.moviebooking.exception.PaymentTimeoutException;
 import com.dmg.moviebooking.exception.ResourceNotFoundException;
-import com.dmg.moviebooking.repository.BookingRepository;
-import com.dmg.moviebooking.repository.BookingSeatRepository;
-import com.dmg.moviebooking.repository.SeatRepository;
-import com.dmg.moviebooking.repository.UserRepository;
+import com.dmg.moviebooking.repository.*;
 import com.dmg.moviebooking.service.admin.ShowService;
 import org.springframework.cache.CacheManager;
 import jakarta.annotation.PostConstruct;
@@ -42,6 +39,8 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final BookingSeatRepository bookingSeatRepository;
     private final SeatRepository seatRepository;
+    private final ScreenRepository screenRepository;
+    private final TheaterRepository theaterRepository;
     private final UserRepository userRepository;
     private final SeatHoldManager seatHoldManager;
     private final ShowService showService;
@@ -62,6 +61,8 @@ public class BookingService {
     public BookingService(BookingRepository bookingRepository,
                           BookingSeatRepository bookingSeatRepository,
                           SeatRepository seatRepository,
+                          ScreenRepository screenRepository,
+                          TheaterRepository theaterRepository,
                           UserRepository userRepository,
                           SeatHoldManager seatHoldManager,
                           ShowService showService,
@@ -69,6 +70,8 @@ public class BookingService {
         this.bookingRepository = bookingRepository;
         this.bookingSeatRepository = bookingSeatRepository;
         this.seatRepository = seatRepository;
+        this.screenRepository = screenRepository;
+        this.theaterRepository = theaterRepository;
         this.userRepository = userRepository;
         this.seatHoldManager = seatHoldManager;
         this.showService = showService;
@@ -99,7 +102,7 @@ public class BookingService {
     @Transactional(readOnly = true)
     public List<SeatAvailabilityResponse> getSeatAvailability(Long showId) {
         Show show = getShowEntity(showId);
-        List<Seat> seats = seatRepository.findByScreenId(show.getScreen().getId());
+        List<Seat> seats = seatRepository.findByScreenId(show.getScreenId());
 
         Set<Long> heldSeatIds = seatHoldManager.getAllHeldSeatIds(showId);
         Set<Long> bookedSeatIds = new HashSet<>(bookingSeatRepository.findBookedSeatIdsByShowId(showId));
@@ -119,7 +122,7 @@ public class BookingService {
                             .rowLabel(seat.getRowLabel())
                             .seatNumber(seat.getSeatNumber())
                             .seatType(seat.getSeatType())
-                            .screenId(seat.getScreen().getId())
+                            .screenId(seat.getScreenId())
                             .status(status)
                             .build();
                 })
@@ -128,12 +131,10 @@ public class BookingService {
 
     /**
      * Hold seats for a user, starting the 5-minute payment window.
-     * If seats can't be held (already held by another user), throws BookingConflictException.
      */
     @CacheEvict(value = "seats", allEntries = true)
     public BookingResponse holdSeats(BookingRequest request, Long userId) {
         Show show = getShowEntity(request.getShowId());
-        User user = userRepository.getReferenceById(userId);
         List<Seat> seats = seatRepository.findAllById(request.getSeatIds());
 
         if (seats.size() != request.getSeatIds().size()) {
@@ -142,7 +143,7 @@ public class BookingService {
 
         // Validate all seats belong to the show's screen
         for (Seat seat : seats) {
-            if (!seat.getScreen().getId().equals(show.getScreen().getId())) {
+            if (!seat.getScreenId().equals(show.getScreenId())) {
                 throw new IllegalArgumentException("Seat " + seat.getId() + " does not belong to this show's screen");
             }
         }
@@ -154,15 +155,15 @@ public class BookingService {
             throw new BookingConflictException("Some seats are already held by another user. Please try again.");
         }
 
-        // Calculate total price based on base price (in real system, apply pricing tier logic)
+        // Calculate total price based on base price
         BigDecimal totalAmount = show.getBasePrice().multiply(BigDecimal.valueOf(seats.size()));
 
         LocalDateTime holdExpiresAt = LocalDateTime.now().plusMinutes(holdDurationMinutes);
 
         // Create booking in PENDING_PAYMENT status
         Booking booking = Booking.builder()
-                .user(user)
-                .show(show)
+                .userId(userId)
+                .showId(request.getShowId())
                 .status(BookingStatus.PENDING_PAYMENT)
                 .totalAmount(totalAmount)
                 .holdExpiresAt(holdExpiresAt)
@@ -170,25 +171,28 @@ public class BookingService {
 
         List<BookingSeat> bookingSeats = seats.stream()
                 .map(seat -> BookingSeat.builder()
-                        .booking(booking)
-                        .seat(seat)
+                        .bookingId(booking.getId())
+                        .seatId(seat.getId())
                         .price(show.getBasePrice())
                         .build())
                 .collect(Collectors.toList());
 
-        booking.setBookingSeats(bookingSeats);
         Booking savedBooking = bookingRepository.save(booking);
+
+        // Now save booking seats with the booking ID
+        for (BookingSeat bs : bookingSeats) {
+            bs.setBookingId(savedBooking.getId());
+        }
+        bookingSeatRepository.saveAll(bookingSeats);
 
         log.info("Booking {} created for user '{}' on show {} with {} seats (hold expires: {})",
                 savedBooking.getId(), userId, request.getShowId(), seats.size(), holdExpiresAt);
-
 
         return toResponse(savedBooking, show);
     }
 
     /**
-     * Process payment for a booking. Checks if the 5-minute hold window is still valid.
-     * If expired, releases the seats and throws PaymentTimeoutException.
+     * Process payment for a booking.
      */
     @CacheEvict(value = "seats", allEntries = true)
     public BookingResponse processPayment(Long bookingId, Long userId) {
@@ -200,9 +204,8 @@ public class BookingService {
 
         // Check if hold has expired
         if (booking.getHoldExpiresAt() != null && booking.getHoldExpiresAt().isBefore(LocalDateTime.now())) {
-            // Release seats and cancel booking
             Set<Long> seatIds = new HashSet<>(bookingSeatRepository.findSeatIdsByBookingId(bookingId));
-            seatHoldManager.releaseSeats(booking.getShow().getId(), seatIds);
+            seatHoldManager.releaseSeats(booking.getShowId(), seatIds);
             booking.setStatus(BookingStatus.CANCELLED);
             booking.setCancelledAt(LocalDateTime.now());
             bookingRepository.save(booking);
@@ -211,13 +214,12 @@ public class BookingService {
                     "Payment window of " + holdDurationMinutes + " minutes has expired. Booking has been cancelled.");
         }
 
-        // Process payment (mock - in real system, integrate with payment gateway)
         booking.setStatus(BookingStatus.CONFIRMED);
         booking.setConfirmedAt(LocalDateTime.now());
-        booking.setHoldExpiresAt(null); // Clear hold expiry since payment is done
+        booking.setHoldExpiresAt(null);
         bookingRepository.save(booking);
 
-        Show show = booking.getShow();
+        Show show = getShowEntity(booking.getShowId());
         log.info("Booking {} confirmed with payment for user id '{}'", bookingId, userId);
 
         return toResponse(booking, show);
@@ -242,13 +244,13 @@ public class BookingService {
 
         // Release seat holds in cache
         Set<Long> seatIds = new HashSet<>(bookingSeatRepository.findSeatIdsByBookingId(bookingId));
-        seatHoldManager.releaseSeats(booking.getShow().getId(), seatIds);
+        seatHoldManager.releaseSeats(booking.getShowId(), seatIds);
 
         booking.setStatus(BookingStatus.CANCELLED);
         booking.setCancelledAt(LocalDateTime.now());
         bookingRepository.save(booking);
 
-        Show show = booking.getShow();
+        Show show = getShowEntity(booking.getShowId());
         log.info("Booking {} cancelled by user id '{}'", bookingId, userId);
 
         return toResponse(booking, show);
@@ -259,9 +261,9 @@ public class BookingService {
      */
     @Transactional(readOnly = true)
     public List<BookingResponse> getBookingHistory(Long userId) {
-        return bookingRepository.findByUser_IdOrderByCreatedAtDesc(userId).stream()
+        return bookingRepository.findByUserIdOrderByCreatedAtDesc(userId).stream()
                 .map(booking -> {
-                    Show show = booking.getShow();
+                    Show show = getShowEntity(booking.getShowId());
                     return toResponse(booking, show);
                 })
                 .toList();
@@ -275,25 +277,23 @@ public class BookingService {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", bookingId));
         validateOwnership(booking, userId);
-        Show show = booking.getShow();
+        Show show = getShowEntity(booking.getShowId());
         return toResponse(booking, show);
     }
 
     /**
-     * Cleanup expired PENDING_PAYMENT bookings whose 5-minute hold window has passed.
-     * This prevents zombie bookings from holding seats indefinitely.
+     * Cleanup expired PENDING_PAYMENT bookings.
      */
     void cleanupExpiredBookings() {
         List<Booking> expired = bookingRepository.findByStatusAndHoldExpiresAtBefore(
                 BookingStatus.PENDING_PAYMENT, LocalDateTime.now());
         for (Booking booking : expired) {
             Set<Long> seatIds = new HashSet<>(bookingSeatRepository.findSeatIdsByBookingId(booking.getId()));
-            seatHoldManager.releaseSeats(booking.getShow().getId(), seatIds);
+            seatHoldManager.releaseSeats(booking.getShowId(), seatIds);
             booking.setStatus(BookingStatus.CANCELLED);
             booking.setCancelledAt(LocalDateTime.now());
             bookingRepository.save(booking);
-            // Evict seat availability cache for this show
-            cacheManager.getCache("seats").evict("availability-" + booking.getShow().getId());
+            cacheManager.getCache("seats").evict("availability-" + booking.getShowId());
             log.warn("Auto-cancelled expired booking {} (hold expired at {})", booking.getId(), booking.getHoldExpiresAt());
         }
     }
@@ -303,7 +303,7 @@ public class BookingService {
     }
 
     private void validateOwnership(Booking booking, Long userId) {
-        if (!booking.getUser().getId().equals(userId)) {
+        if (!booking.getUserId().equals(userId)) {
             throw new InvalidBookingStateException("Booking does not belong to this user");
         }
     }
@@ -316,23 +316,38 @@ public class BookingService {
     }
 
     private BookingResponse toResponse(Booking booking, Show show) {
-        List<BookingResponse.SeatInfo> seatInfos = booking.getBookingSeats().stream()
-                .map(bs -> BookingResponse.SeatInfo.builder()
-                        .seatId(bs.getSeat().getId())
-                        .rowLabel(bs.getSeat().getRowLabel())
-                        .seatNumber(bs.getSeat().getSeatNumber())
-                        .seatType(bs.getSeat().getSeatType().name())
-                        .price(bs.getPrice())
-                        .build())
+        List<BookingSeat> bookingSeats = bookingSeatRepository.findByBookingId(booking.getId());
+
+        // Look up show metadata
+        String movieTitle = show.getMovieTitle();
+        String screenName = screenRepository.findById(show.getScreenId())
+                .map(Screen::getName)
+                .orElse("Unknown");
+        String theaterName = screenRepository.findById(show.getScreenId())
+                .flatMap(screen -> theaterRepository.findById(screen.getTheaterId()))
+                .map(theater -> theater.getName())
+                .orElse("Unknown");
+
+        List<BookingResponse.SeatInfo> seatInfos = bookingSeats.stream()
+                .map(bs -> {
+                    Seat seat = seatRepository.findById(bs.getSeatId()).orElse(null);
+                    return BookingResponse.SeatInfo.builder()
+                            .seatId(bs.getSeatId())
+                            .rowLabel(seat != null ? seat.getRowLabel() : "?")
+                            .seatNumber(seat != null ? seat.getSeatNumber() : 0)
+                            .seatType(seat != null ? seat.getSeatType().name() : "REGULAR")
+                            .price(bs.getPrice())
+                            .build();
+                })
                 .toList();
 
         return BookingResponse.builder()
                 .id(booking.getId())
-                .userId(booking.getUser().getId())
-                .showId(booking.getShow().getId())
-                .movieTitle(show.getMovieTitle())
-                .theaterName(show.getScreen().getTheater().getName())
-                .screenName(show.getScreen().getName())
+                .userId(booking.getUserId())
+                .showId(booking.getShowId())
+                .movieTitle(movieTitle)
+                .theaterName(theaterName)
+                .screenName(screenName)
                 .status(booking.getStatus())
                 .totalAmount(booking.getTotalAmount())
                 .holdExpiresAt(booking.getHoldExpiresAt())

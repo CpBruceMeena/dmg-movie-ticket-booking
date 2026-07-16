@@ -98,13 +98,13 @@ class BookingServiceTest {
         Theater theater = theaterRepository.save(Theater.builder()
                 .name("Test Theater")
                 .location("Test Location")
-                .city(city)
+                .cityId(city.getId())
                 .build());
 
         Screen screen = screenRepository.save(Screen.builder()
                 .name("Test Screen")
                 .totalSeats(10)
-                .theater(theater)
+                .theaterId(theater.getId())
                 .build());
 
         // Create 10 seats
@@ -113,13 +113,13 @@ class BookingServiceTest {
                     .rowLabel("A")
                     .seatNumber(i)
                     .seatType(SeatType.REGULAR)
-                    .screen(screen)
+                    .screenId(screen.getId())
                     .build());
         }
 
         testShow = showRepository.save(Show.builder()
                 .movieTitle("Inception")
-                .screen(screen)
+                .screenId(screen.getId())
                 .startTime(LocalDateTime.now().plusDays(1))
                 .endTime(LocalDateTime.now().plusDays(1).plusHours(2))
                 .basePrice(BigDecimal.valueOf(300))
@@ -140,7 +140,7 @@ class BookingServiceTest {
     @Test
     void holdSeats_ShouldCreatePendingPaymentBooking() {
         // Get seat IDs
-        List<Seat> seats = seatRepository.findByScreenId(testShow.getScreen().getId());
+        List<Seat> seats = seatRepository.findByScreenId(testShow.getScreenId());
         Set<Long> seatIds = Set.of(seats.get(0).getId(), seats.get(1).getId(), seats.get(2).getId());
 
         BookingRequest request = BookingRequest.builder()
@@ -159,7 +159,7 @@ class BookingServiceTest {
 
     @Test
     void holdSeats_ShouldThrowConflict_WhenSeatsAlreadyHeld() {
-        List<Seat> seats = seatRepository.findByScreenId(testShow.getScreen().getId());
+        List<Seat> seats = seatRepository.findByScreenId(testShow.getScreenId());
         Set<Long> seatIds = Set.of(seats.get(0).getId(), seats.get(1).getId());
 
         // First hold by user1
@@ -178,7 +178,7 @@ class BookingServiceTest {
 
     @Test
     void holdAndPay_ShouldConfirmBooking() {
-        List<Seat> seats = seatRepository.findByScreenId(testShow.getScreen().getId());
+        List<Seat> seats = seatRepository.findByScreenId(testShow.getScreenId());
         Set<Long> seatIds = Set.of(seats.get(0).getId(), seats.get(1).getId());
 
         // Hold seats
@@ -195,7 +195,7 @@ class BookingServiceTest {
 
     @Test
     void holdAndCancel_ShouldReleaseSeats() {
-        List<Seat> seats = seatRepository.findByScreenId(testShow.getScreen().getId());
+        List<Seat> seats = seatRepository.findByScreenId(testShow.getScreenId());
         Set<Long> seatIds = Set.of(seats.get(0).getId());
 
         // Hold seats
@@ -218,7 +218,7 @@ class BookingServiceTest {
 
     @Test
     void getBookingHistory_ShouldReturnUserBookings() {
-        List<Seat> seats = seatRepository.findByScreenId(testShow.getScreen().getId());
+        List<Seat> seats = seatRepository.findByScreenId(testShow.getScreenId());
         Set<Long> seatIds = Set.of(seats.get(0).getId());
 
         // Create a booking
@@ -235,7 +235,7 @@ class BookingServiceTest {
 
     @Test
     void cancelBooking_ShouldThrow_WhenAlreadyCancelled() {
-        List<Seat> seats = seatRepository.findByScreenId(testShow.getScreen().getId());
+        List<Seat> seats = seatRepository.findByScreenId(testShow.getScreenId());
         Set<Long> seatIds = Set.of(seats.get(0).getId());
 
         BookingResponse heldBooking = bookingService.holdSeats(
@@ -250,7 +250,7 @@ class BookingServiceTest {
 
     @Test
     void seatAvailability_ShouldReflectBookingStatus() {
-        List<Seat> seats = seatRepository.findByScreenId(testShow.getScreen().getId());
+        List<Seat> seats = seatRepository.findByScreenId(testShow.getScreenId());
         Seat seat1 = seats.get(0);
         Seat seat2 = seats.get(1);
         Seat seat3 = seats.get(2);

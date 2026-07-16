@@ -10,9 +10,11 @@ import java.util.List;
 
 @Repository
 public interface BookingSeatRepository extends JpaRepository<BookingSeat, Long> {
-    @Query("SELECT bs.seat.id FROM BookingSeat bs JOIN bs.booking b WHERE b.show.id = :showId AND b.status = 'CONFIRMED'")
+    @Query("SELECT bs.seatId FROM BookingSeat bs WHERE bs.bookingId IN (SELECT b.id FROM Booking b WHERE b.showId = :showId AND b.status = 'CONFIRMED')")
     List<Long> findBookedSeatIdsByShowId(@Param("showId") Long showId);
 
-    @Query("SELECT bs.seat.id FROM BookingSeat bs JOIN bs.booking b WHERE b.id = :bookingId")
+    @Query("SELECT bs.seatId FROM BookingSeat bs WHERE bs.bookingId = :bookingId")
     List<Long> findSeatIdsByBookingId(@Param("bookingId") Long bookingId);
+
+    List<BookingSeat> findByBookingId(Long bookingId);
 }
