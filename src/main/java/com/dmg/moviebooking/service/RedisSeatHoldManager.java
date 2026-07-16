@@ -11,6 +11,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
 
+import jakarta.annotation.PostConstruct;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -157,8 +158,12 @@ public class RedisSeatHoldManager implements SeatHoldManager {
     private final DefaultRedisScript<Long> atomicExtendScript;
     private final DefaultRedisScript<Long> atomicReleaseScript;
 
-    public RedisSeatHoldManager(StringRedisTemplate redisTemplate) {
+    private final HealthService healthService;
+
+    public RedisSeatHoldManager(StringRedisTemplate redisTemplate,
+                                 HealthService healthService) {
         this.redisTemplate = redisTemplate;
+        this.healthService = healthService;
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
 
@@ -173,6 +178,23 @@ public class RedisSeatHoldManager implements SeatHoldManager {
         this.atomicReleaseScript = new DefaultRedisScript<>();
         this.atomicReleaseScript.setScriptText(ATOMIC_RELEASE_SCRIPT);
         this.atomicReleaseScript.setResultType(Long.class);
+    }
+
+    @PostConstruct
+    public void verifyConnection() {
+        try {
+            String pong = redisTemplate.getConnectionFactory().getConnection().ping();
+            boolean connected = "PONG".equalsIgnoreCase(pong);
+            healthService.setRedisHealthy(connected);
+            if (connected) {
+                log.info("Redis connection verified at startup - PONG received");
+            } else {
+                log.warn("Redis ping at startup returned unexpected: {}", pong);
+            }
+        } catch (Exception e) {
+            healthService.setRedisHealthy(false);
+            log.error("Redis connection failed at startup: {}", e.getMessage());
+        }
     }
 
     @Override
