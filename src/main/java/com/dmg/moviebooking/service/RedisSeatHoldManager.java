@@ -48,40 +48,40 @@ public class RedisSeatHoldManager implements SeatHoldManager {
      * Returns 1 on success, 0 if any seat is already held by another user.
      */
     private static final String ATOMIC_HOLD_SCRIPT =
-            "local holds_key = KEYS[1]" +
-            "local seat_ids_json = ARGV[1]" +
-            "local now_str = ARGV[2]" +
-            "local expiry_str = ARGV[3]" +
-            "local duration_sec = tonumber(ARGV[4])" +
-            "local user_id = tonumber(ARGV[5])" +
-            "local show_id = ARGV[6]" +
-            "" +
-            "local seats = cjson.decode(seat_ids_json)" +
-            "" +
-            "-- Check each seat: if held by another user and not expired, fail" +
-            "for i, seat_id in ipairs(seats) do" +
-            "    local seat_id_str = tostring(seat_id)" +
-            "    local existing = redis.call('HGET', holds_key, seat_id_str)" +
-            "    if existing then" +
-            "        local existing_data = cjson.decode(existing)" +
-            "        if existing_data.userId ~= user_id and" +
-            "           existing_data.expiresAt > now_str then" +
-            "            return 0" +
-            "        end" +
-            "    end" +
-            "end" +
-            "" +
-            "-- All checks passed: hold all seats atomically" +
-            "for i, seat_id in ipairs(seats) do" +
-            "    local seat_id_str = tostring(seat_id)" +
-            "    local hold_data = cjson.encode({userId = user_id, expiresAt = expiry_str})" +
-            "    local individual_key = 'seat:hold:' .. show_id .. ':' .. seat_id_str" +
-            "    redis.call('HSET', holds_key, seat_id_str, hold_data)" +
-            "    redis.call('SETEX', individual_key, duration_sec, hold_data)" +
-            "end" +
-            "" +
-            "redis.call('EXPIRE', holds_key, duration_sec)" +
-            "" +
+            "local holds_key = KEYS[1]\n" +
+            "local seat_ids_json = ARGV[1]\n" +
+            "local now_str = ARGV[2]\n" +
+            "local expiry_str = ARGV[3]\n" +
+            "local duration_sec = tonumber(ARGV[4])\n" +
+            "local user_id = tonumber(ARGV[5])\n" +
+            "local show_id = ARGV[6]\n" +
+            "\n" +
+            "local seats = cjson.decode(seat_ids_json)\n" +
+            "\n" +
+            "-- Check each seat: if held by another user and not expired, fail\n" +
+            "for i, seat_id in ipairs(seats) do\n" +
+            "    local seat_id_str = tostring(seat_id)\n" +
+            "    local existing = redis.call('HGET', holds_key, seat_id_str)\n" +
+            "    if existing then\n" +
+            "        local existing_data = cjson.decode(existing)\n" +
+            "        if existing_data.userId ~= user_id and\n" +
+            "           existing_data.expiresAt > now_str then\n" +
+            "            return 0\n" +
+            "        end\n" +
+            "    end\n" +
+            "end\n" +
+            "\n" +
+            "-- All checks passed: hold all seats atomically\n" +
+            "for i, seat_id in ipairs(seats) do\n" +
+            "    local seat_id_str = tostring(seat_id)\n" +
+            "    local hold_data = cjson.encode({userId = user_id, expiresAt = expiry_str})\n" +
+            "    local individual_key = 'seat:hold:' .. show_id .. ':' .. seat_id_str\n" +
+            "    redis.call('HSET', holds_key, seat_id_str, hold_data)\n" +
+            "    redis.call('SETEX', individual_key, duration_sec, hold_data)\n" +
+            "end\n" +
+            "\n" +
+            "redis.call('EXPIRE', holds_key, duration_sec)\n" +
+            "\n" +
             "return 1";
 
     /**
@@ -97,29 +97,29 @@ public class RedisSeatHoldManager implements SeatHoldManager {
      * Returns 1 on success, 0 if seat not found or held by different user.
      */
     private static final String ATOMIC_EXTEND_SCRIPT =
-            "local holds_key = KEYS[1]" +
-            "local seat_id = ARGV[1]" +
-            "local user_id = tonumber(ARGV[2])" +
-            "local new_expiry_str = ARGV[3]" +
-            "local additional_sec = tonumber(ARGV[4])" +
-            "local show_id = ARGV[5]" +
-            "" +
-            "local existing = redis.call('HGET', holds_key, seat_id)" +
-            "if not existing then" +
-            "    return 0" +
-            "end" +
-            "" +
-            "local existing_data = cjson.decode(existing)" +
-            "if existing_data.userId ~= user_id then" +
-            "    return 0" +
-            "end" +
-            "" +
-            "-- Update with new expiry" +
-            "local hold_data = cjson.encode({userId = user_id, expiresAt = new_expiry_str})" +
-            "local individual_key = 'seat:hold:' .. show_id .. ':' .. seat_id" +
-            "redis.call('HSET', holds_key, seat_id, hold_data)" +
-            "redis.call('SETEX', individual_key, additional_sec, hold_data)" +
-            "" +
+            "local holds_key = KEYS[1]\n" +
+            "local seat_id = ARGV[1]\n" +
+            "local user_id = tonumber(ARGV[2])\n" +
+            "local new_expiry_str = ARGV[3]\n" +
+            "local additional_sec = tonumber(ARGV[4])\n" +
+            "local show_id = ARGV[5]\n" +
+            "\n" +
+            "local existing = redis.call('HGET', holds_key, seat_id)\n" +
+            "if not existing then\n" +
+            "    return 0\n" +
+            "end\n" +
+            "\n" +
+            "local existing_data = cjson.decode(existing)\n" +
+            "if existing_data.userId ~= user_id then\n" +
+            "    return 0\n" +
+            "end\n" +
+            "\n" +
+            "-- Update with new expiry\n" +
+            "local hold_data = cjson.encode({userId = user_id, expiresAt = new_expiry_str})\n" +
+            "local individual_key = 'seat:hold:' .. show_id .. ':' .. seat_id\n" +
+            "redis.call('HSET', holds_key, seat_id, hold_data)\n" +
+            "redis.call('SETEX', individual_key, additional_sec, hold_data)\n" +
+            "\n" +
             "return 1";
 
     /**
@@ -137,19 +137,19 @@ public class RedisSeatHoldManager implements SeatHoldManager {
      * ARGV[2] = show ID
      */
     private static final String ATOMIC_RELEASE_SCRIPT =
-            "local holds_key = KEYS[1]" +
-            "local seat_ids_json = ARGV[1]" +
-            "local show_id = ARGV[2]" +
-            "" +
-            "local seats = cjson.decode(seat_ids_json)" +
-            "" +
-            "for i, seat_id in ipairs(seats) do" +
-            "    local seat_id_str = tostring(seat_id)" +
-            "    redis.call('HDEL', holds_key, seat_id_str)" +
-            "    local individual_key = 'seat:hold:' .. show_id .. ':' .. seat_id_str" +
-            "    redis.call('DEL', individual_key)" +
-            "end" +
-            "" +
+            "local holds_key = KEYS[1]\n" +
+            "local seat_ids_json = ARGV[1]\n" +
+            "local show_id = ARGV[2]\n" +
+            "\n" +
+            "local seats = cjson.decode(seat_ids_json)\n" +
+            "\n" +
+            "for i, seat_id in ipairs(seats) do\n" +
+            "    local seat_id_str = tostring(seat_id)\n" +
+            "    redis.call('HDEL', holds_key, seat_id_str)\n" +
+            "    local individual_key = 'seat:hold:' .. show_id .. ':' .. seat_id_str\n" +
+            "    redis.call('DEL', individual_key)\n" +
+            "end\n" +
+            "\n" +
             "return 1";
 
     private final StringRedisTemplate redisTemplate;
