@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# Pre-push hook: Prevent pushes directly to main/master branches.
+#
+# All changes must be merged via pull requests to main/master.
+#
+
+PROTECTED_BRANCHES="main master"
+
+while read local_ref local_sha remote_ref remote_sha; do
+    for protected in $PROTECTED_BRANCHES; do
+        if echo "$remote_ref" | grep -q "refs/heads/$protected$"; then
+            echo ""
+            echo "  ❌ ERROR: Direct pushes to the '$protected' branch are not allowed."
+            echo ""
+            echo "     Please push your feature branch instead and create"
+            echo "     a pull request to merge into '$protected'."
+            echo ""
+            exit 1
+        fi
+    done
+done
+
+exit 0
