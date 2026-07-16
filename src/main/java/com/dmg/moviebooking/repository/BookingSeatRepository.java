@@ -10,7 +10,7 @@ import java.util.List;
 
 @Repository
 public interface BookingSeatRepository extends JpaRepository<BookingSeat, Long> {
-    @Query("SELECT bs.seat.id FROM BookingSeat bs JOIN bs.booking b WHERE b.showId = :showId AND b.status = 'CONFIRMED'")
+    @Query("SELECT bs.seat.id FROM BookingSeat bs JOIN bs.booking b WHERE b.show.id = :showId AND b.status = 'CONFIRMED'")
     List<Long> findBookedSeatIdsByShowId(@Param("showId") Long showId);
 
     @Query("SELECT bs.seat.id FROM BookingSeat bs JOIN bs.booking b WHERE b.id = :bookingId")
