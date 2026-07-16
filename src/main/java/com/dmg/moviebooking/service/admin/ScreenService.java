@@ -5,6 +5,7 @@ import com.dmg.moviebooking.dto.response.ScreenResponse;
 import com.dmg.moviebooking.entity.Screen;
 import com.dmg.moviebooking.entity.Theater;
 import com.dmg.moviebooking.exception.DuplicateResourceException;
+import com.dmg.moviebooking.exception.ResourceNotFoundException;
 import com.dmg.moviebooking.repository.ScreenRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,13 +53,13 @@ public class ScreenService {
     @Transactional(readOnly = true)
     public ScreenResponse getScreenById(Long id) {
         Screen screen = screenRepository.findById(id)
-                .orElseThrow(() -> new com.dmg.moviebooking.exception.ResourceNotFoundException("Screen", id));
+                .orElseThrow(() -> new ResourceNotFoundException("Screen", id));
         return toResponse(screen);
     }
 
     public Screen getScreenEntity(Long id) {
         return screenRepository.findById(id)
-                .orElseThrow(() -> new com.dmg.moviebooking.exception.ResourceNotFoundException("Screen", id));
+                .orElseThrow(() -> new ResourceNotFoundException("Screen", id));
     }
 
     private ScreenResponse toResponse(Screen screen) {

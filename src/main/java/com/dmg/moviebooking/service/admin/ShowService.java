@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -86,7 +87,7 @@ public class ShowService {
                 .screenId(show.getScreen().getId())
                 .screenName(show.getScreen().getName())
                 .theaterName(show.getScreen().getTheater().getName())
-                .pricingTierIds(show.getPricingTiers().stream().map(PricingTier::getId).collect(java.util.stream.Collectors.toSet()))
+                .pricingTierIds(show.getPricingTiers().stream().map(PricingTier::getId).collect(Collectors.toSet()))
                 .createdAt(show.getCreatedAt())
                 .updatedAt(show.getUpdatedAt())
                 .build();
