@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# Pre-commit hook: Prevent commits directly on main/master branches.
+#
+# All work-in-progress changes must be made on feature branches
+# and merged via pull requests.
+#
+
+BRANCH_NAME=$(git symbolic-ref --short HEAD 2>/dev/null)
+
+if [ "$BRANCH_NAME" = "main" ] || [ "$BRANCH_NAME" = "master" ]; then
+    echo ""
+    echo "  ❌ ERROR: Direct commits to the '$BRANCH_NAME' branch are not allowed."
+    echo ""
+    echo "     Please create a feature branch first:"
+    echo "       git checkout -b <feature-branch-name>"
+    echo ""
+    echo "     Then commit your changes there and open a pull request"
+    echo "     to merge into '$BRANCH_NAME'."
+    echo ""
+    exit 1
+fi
+
+exit 0

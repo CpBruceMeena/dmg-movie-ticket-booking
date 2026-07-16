@@ -154,6 +154,16 @@ The application starts on `http://localhost:8080`.
 
 Access the H2 Console at `http://localhost:8080/h2-console` (JDBC URL: `jdbc:h2:mem:moviebooking`).
 
+### Enable Branch Protection Hooks
+
+This repository includes **Git hooks** that prevent direct commits and pushes to the `main` branch. All changes must go through feature branches and pull requests.
+
+After cloning, enable the hooks:
+
+```bash
+git config core.hooksPath .githooks   # Enable branch protection hooks
+```
+
 ### Default Credentials
 
 | Role | Username | Password |
