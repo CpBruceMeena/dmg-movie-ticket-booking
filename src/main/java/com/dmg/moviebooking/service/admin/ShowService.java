@@ -78,9 +78,21 @@ public class ShowService {
     @Cacheable(value = "shows", key = "'id-' + #id")
     @Transactional(readOnly = true)
     public ShowResponse getShowById(Long id) {
-        Show show = showRepository.findById(id)
+        return toResponse(getShowEntity(id));
+    }
+
+    @Cacheable(value = "shows", key = "'all'")
+    @Transactional(readOnly = true)
+    public List<ShowResponse> getAllShows() {
+        return showRepository.findAll().stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Show getShowEntity(Long id) {
+        return showRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Show", id));
-        return toResponse(show);
     }
 
     private ShowResponse toResponse(Show show) {
