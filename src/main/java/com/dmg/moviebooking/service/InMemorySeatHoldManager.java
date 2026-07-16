@@ -5,6 +5,7 @@ import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
+@ConditionalOnProperty(name = "booking.hold.manager", havingValue = "in-memory", matchIfMissing = true)
 public class InMemorySeatHoldManager implements SeatHoldManager {
 
     private static final Logger log = LoggerFactory.getLogger(InMemorySeatHoldManager.class);

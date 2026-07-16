@@ -50,6 +50,9 @@ Desktop.ini
 log/
 logs/
 
+# Keys & Secrets
+keys/
+
 # Env
 .env
 .env.local
