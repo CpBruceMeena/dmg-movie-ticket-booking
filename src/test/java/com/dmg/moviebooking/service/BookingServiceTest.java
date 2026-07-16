@@ -51,6 +51,15 @@ class BookingServiceTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private BookingRepository bookingRepository;
+
+    @Autowired
+    private BookingSeatRepository bookingSeatRepository;
+
+    @Autowired
+    private SeatHoldManager seatHoldManager;
+
     private Show testShow;
     private Long userId;
     private Long userId1;
@@ -246,6 +255,48 @@ class BookingServiceTest {
 
         assertThrows(InvalidBookingStateException.class,
                 () -> bookingService.cancelBooking(heldBooking.getId(), userId));
+    }
+
+    @Test
+    void holdTimeout_ShouldAutoCancelAndReleaseSeats() {
+        // Hold 3 seats
+        List<Seat> seats = seatRepository.findByScreenId(testShow.getScreenId());
+        Set<Long> seatIds = Set.of(seats.get(0).getId(), seats.get(1).getId(), seats.get(2).getId());
+
+        BookingResponse heldBooking = bookingService.holdSeats(
+                BookingRequest.builder().showId(testShow.getId()).seatIds(seatIds).build(),
+                userId);
+
+        assertNotNull(heldBooking);
+        assertEquals(BookingStatus.PENDING_PAYMENT, heldBooking.getStatus());
+
+        // Manually expire the hold by setting holdExpiresAt to the past
+        Booking booking = bookingRepository.findById(heldBooking.getId()).orElseThrow();
+        booking.setHoldExpiresAt(LocalDateTime.now().minusMinutes(1));
+        bookingRepository.save(booking);
+
+        // Run the cleanup scheduler directly (package-private method)
+        // This mimics what the @Scheduled cleanup does every 30 seconds
+        bookingService.cleanupExpiredBookings();
+
+        // Verify booking is now cancelled
+        Booking cancelledBooking = bookingRepository.findById(heldBooking.getId()).orElseThrow();
+        assertEquals(BookingStatus.CANCELLED, cancelledBooking.getStatus());
+        assertNotNull(cancelledBooking.getCancelledAt(), "CancelledAt should be set on auto-cancel");
+
+        // Verify seats are available again
+        List<SeatAvailabilityResponse> availability = bookingService.getSeatAvailability(testShow.getId());
+        long availableCount = availability.stream()
+                .filter(s -> s.getStatus() == SeatAvailabilityResponse.Status.AVAILABLE)
+                .count();
+        assertEquals(10, availableCount, "All 10 seats should be available after timeout auto-cancellation");
+
+        // Verify the hold was released from the seat hold manager
+        Set<Long> heldSeatIds = seatHoldManager.getAllHeldSeatIds(testShow.getId());
+        for (Long seatId : seatIds) {
+            assertFalse(heldSeatIds.contains(seatId),
+                    "Seat " + seatId + " should not be held after timeout");
+        }
     }
 
     @Test
