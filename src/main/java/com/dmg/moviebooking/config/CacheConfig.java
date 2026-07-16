@@ -19,7 +19,8 @@ public class CacheConfig {
                 "seats",
                 "shows",
                 "pricingTiers",
-                "refundPolicies"
+                "refundPolicies",
+                "users"
         );
     }
 }
