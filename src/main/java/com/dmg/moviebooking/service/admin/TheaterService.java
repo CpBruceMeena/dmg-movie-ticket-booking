@@ -7,6 +7,8 @@ import com.dmg.moviebooking.entity.Theater;
 import com.dmg.moviebooking.exception.DuplicateResourceException;
 import com.dmg.moviebooking.exception.ResourceNotFoundException;
 import com.dmg.moviebooking.repository.TheaterRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +26,7 @@ public class TheaterService {
         this.cityService = cityService;
     }
 
+    @CacheEvict(value = "theaters", allEntries = true)
     public TheaterResponse createTheater(TheaterRequest request) {
         City city = cityService.getCityEntity(request.getCityId());
 
@@ -42,6 +45,7 @@ public class TheaterService {
         return toResponse(theater);
     }
 
+    @Cacheable(value = "theaters", key = "#cityId")
     @Transactional(readOnly = true)
     public List<TheaterResponse> getTheatersByCityId(Long cityId) {
         cityService.getCityEntity(cityId); // validate city exists
@@ -50,6 +54,7 @@ public class TheaterService {
                 .toList();
     }
 
+    @Cacheable(value = "theaters", key = "'id-' + #id")
     @Transactional(readOnly = true)
     public TheaterResponse getTheaterById(Long id) {
         Theater theater = theaterRepository.findById(id)

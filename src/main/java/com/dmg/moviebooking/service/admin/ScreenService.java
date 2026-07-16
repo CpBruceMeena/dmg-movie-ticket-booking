@@ -7,6 +7,8 @@ import com.dmg.moviebooking.entity.Theater;
 import com.dmg.moviebooking.exception.DuplicateResourceException;
 import com.dmg.moviebooking.exception.ResourceNotFoundException;
 import com.dmg.moviebooking.repository.ScreenRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,6 +26,7 @@ public class ScreenService {
         this.theaterService = theaterService;
     }
 
+    @CacheEvict(value = "screens", allEntries = true)
     public ScreenResponse createScreen(ScreenRequest request) {
         Theater theater = theaterService.getTheaterEntity(request.getTheaterId());
 
@@ -42,6 +45,7 @@ public class ScreenService {
         return toResponse(screen);
     }
 
+    @Cacheable(value = "screens", key = "#theaterId")
     @Transactional(readOnly = true)
     public List<ScreenResponse> getScreensByTheaterId(Long theaterId) {
         theaterService.getTheaterEntity(theaterId); // validate theater exists
@@ -50,6 +54,7 @@ public class ScreenService {
                 .toList();
     }
 
+    @Cacheable(value = "screens", key = "'id-' + #id")
     @Transactional(readOnly = true)
     public ScreenResponse getScreenById(Long id) {
         Screen screen = screenRepository.findById(id)

@@ -6,6 +6,8 @@ import com.dmg.moviebooking.entity.RefundPolicy;
 import com.dmg.moviebooking.exception.DuplicateResourceException;
 import com.dmg.moviebooking.exception.ResourceNotFoundException;
 import com.dmg.moviebooking.repository.RefundPolicyRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,7 @@ public class RefundPolicyService {
         this.refundPolicyRepository = refundPolicyRepository;
     }
 
+    @CacheEvict(value = "refundPolicies", allEntries = true)
     public RefundPolicyResponse createRefundPolicy(RefundPolicyRequest request) {
         RefundPolicy policy = RefundPolicy.builder()
                 .name(request.getName())
@@ -32,6 +35,7 @@ public class RefundPolicyService {
         return toResponse(policy);
     }
 
+    @Cacheable(value = "refundPolicies")
     @Transactional(readOnly = true)
     public List<RefundPolicyResponse> getAllRefundPolicies() {
         return refundPolicyRepository.findAllByOrderByHoursBeforeShowDesc().stream()
@@ -39,6 +43,7 @@ public class RefundPolicyService {
                 .toList();
     }
 
+    @CacheEvict(value = "refundPolicies", allEntries = true)
     public RefundPolicyResponse updateRefundPolicy(Long id, RefundPolicyRequest request) {
         RefundPolicy policy = refundPolicyRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("RefundPolicy", id));
