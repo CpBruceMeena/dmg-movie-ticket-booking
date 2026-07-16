@@ -2,6 +2,8 @@ package com.dmg.moviebooking.service;
 
 import com.dmg.moviebooking.dto.request.LoginRequest;
 import com.dmg.moviebooking.dto.response.AuthResponse;
+import com.dmg.moviebooking.entity.User;
+import com.dmg.moviebooking.repository.UserRepository;
 import com.dmg.moviebooking.security.JwtTokenProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,8 +12,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 public class LoginService {
@@ -20,38 +20,36 @@ public class LoginService {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
-    private final Map<String, UserDetails> users = new ConcurrentHashMap<>();
+    private final UserRepository userRepository;
 
-    public LoginService(JwtTokenProvider jwtTokenProvider, PasswordEncoder passwordEncoder) {
+    public LoginService(JwtTokenProvider jwtTokenProvider,
+                        PasswordEncoder passwordEncoder,
+                        UserRepository userRepository) {
         this.jwtTokenProvider = jwtTokenProvider;
         this.passwordEncoder = passwordEncoder;
-        initDefaultUsers();
+        this.userRepository = userRepository;
     }
 
     public AuthResponse authenticate(LoginRequest request) {
-        UserDetails user = users.get(request.getUsername());
-        if (user == null || !passwordEncoder.matches(request.getPassword(), user.password)) {
+        User user = userRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new BadCredentialsException("Invalid username or password"));
+
+        if (!user.isActive()) {
+            throw new BadCredentialsException("Account is deactivated");
+        }
+
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new BadCredentialsException("Invalid username or password");
         }
 
-        String token = jwtTokenProvider.generateToken(user.username, user.roles);
-        log.info("User '{}' authenticated successfully with roles: {}", user.username, user.roles);
+        List<String> roles = List.of(user.getRole().name());
+        String token = jwtTokenProvider.generateToken(user.getUsername(), roles);
+        log.info("User '{}' authenticated successfully with role: {}", user.getUsername(), user.getRole());
 
         return AuthResponse.builder()
                 .token(token)
-                .username(user.username)
-                .role(user.roles.get(0))
+                .username(user.getUsername())
+                .role(user.getRole().name())
                 .build();
     }
-
-    private void initDefaultUsers() {
-        users.put("admin", new UserDetails("admin",
-                passwordEncoder.encode("admin123"),
-                List.of("ROLE_ADMIN")));
-        users.put("customer", new UserDetails("customer",
-                passwordEncoder.encode("customer123"),
-                List.of("ROLE_CUSTOMER")));
-    }
-
-    private record UserDetails(String username, String password, List<String> roles) {}
 }

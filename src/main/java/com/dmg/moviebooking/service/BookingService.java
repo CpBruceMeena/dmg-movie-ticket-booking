@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -170,7 +171,7 @@ public class BookingService {
                         .seat(seat)
                         .price(show.getBasePrice())
                         .build())
-                .toList();
+                .collect(Collectors.toList());
 
         booking.setBookingSeats(bookingSeats);
         Booking savedBooking = bookingRepository.save(booking);
