@@ -14,7 +14,7 @@ An **SDE-2 Take-Home Assignment** — A scalable movie ticket booking system bui
 - [Getting Started](#getting-started)
 - [Project Structure](#project-structure)
 - [Running Tests](#running-tests)
-- [AI Workflow](#ai-workflow)
+- [Development Workflow](#development-workflow)
 
 ---
 
@@ -50,6 +50,7 @@ This project implements a **Movie Ticket Booking System** that supports:
 | **Spring Validation** | Request payload validation. |
 | **H2 Database** | In-memory database for development. |
 | **Lombok** | Boilerplate reduction. |
+| **SpringDoc OpenAPI** | API documentation (Swagger UI). |
 | **JUnit 5 + Mockito** | Unit and integration testing. |
 | **Maven** | Build and dependency management. |
 
@@ -154,6 +155,10 @@ The application starts on `http://localhost:8080`.
 
 Access the H2 Console at `http://localhost:8080/h2-console` (JDBC URL: `jdbc:h2:mem:moviebooking`).
 
+Access the **Swagger UI** at `http://localhost:8080/swagger-ui/index.html`.
+
+Access the **OpenAPI JSON spec** at `http://localhost:8080/v3/api-docs`.
+
 ### Enable Branch Protection Hooks
 
 This repository includes **Git hooks** that prevent direct commits and pushes to the `main` branch. All changes must go through feature branches and pull requests.
@@ -215,18 +220,17 @@ mvn verify
 
 ---
 
-## AI Workflow
+## Development Workflow
 
-This project was developed using an **AI-assisted workflow** with multiple specialized agents.
-
-- **[Agents.md](agents.md)** — Detailed documentation of the AI agent workflow, agent roles, and development pipeline.
-- **[Skills.md](skills.md)** — Catalog of AI skills used during development.
+- **[Agents.md](agents.md)** — Development agents, workflow phases, conventions, and code standards.
+- **[Skills.md](skills.md)** — Technical skills required: Java 17, Spring Boot 3.2, Maven, JPA, Security, testing, and API design.
+- **Swagger UI** — Browse and test all REST APIs at `/swagger-ui/index.html` after starting the application.
 
 ---
 
 ## Video Walkthrough
 
-A 10-minute Loom video explaining the high-level approach, tech stack reasoning, AI workflow, and testing strategy is available:
+A 10-minute Loom video explaining the high-level approach, tech stack reasoning, development workflow, and testing strategy is available:
 <!-- Add Loom link here -->
 
 ---
