@@ -6,6 +6,8 @@ import com.dmg.moviebooking.entity.PricingTier;
 import com.dmg.moviebooking.exception.DuplicateResourceException;
 import com.dmg.moviebooking.exception.ResourceNotFoundException;
 import com.dmg.moviebooking.repository.PricingTierRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,7 @@ public class PricingService {
         this.pricingTierRepository = pricingTierRepository;
     }
 
+    @CacheEvict(value = "pricingTiers", allEntries = true)
     public PricingTierResponse createPricingTier(PricingTierRequest request) {
         if (pricingTierRepository.existsByName(request.getName())) {
             throw new DuplicateResourceException("Pricing tier already exists with name: " + request.getName());
@@ -37,6 +40,7 @@ public class PricingService {
         return toResponse(tier);
     }
 
+    @Cacheable(value = "pricingTiers")
     @Transactional(readOnly = true)
     public List<PricingTierResponse> getAllPricingTiers() {
         return pricingTierRepository.findAll().stream()
@@ -44,6 +48,7 @@ public class PricingService {
                 .toList();
     }
 
+    @CacheEvict(value = "pricingTiers", allEntries = true)
     public PricingTierResponse updatePricingTier(Long id, PricingTierRequest request) {
         PricingTier tier = pricingTierRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("PricingTier", id));

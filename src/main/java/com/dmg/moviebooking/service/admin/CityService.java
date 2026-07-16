@@ -6,6 +6,8 @@ import com.dmg.moviebooking.entity.City;
 import com.dmg.moviebooking.exception.DuplicateResourceException;
 import com.dmg.moviebooking.exception.ResourceNotFoundException;
 import com.dmg.moviebooking.repository.CityRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,7 @@ public class CityService {
         this.cityRepository = cityRepository;
     }
 
+    @CacheEvict(value = "cities", allEntries = true)
     public CityResponse createCity(CityRequest request) {
         if (cityRepository.existsByName(request.getName())) {
             throw new DuplicateResourceException("City already exists with name: " + request.getName());
@@ -34,6 +37,7 @@ public class CityService {
         return toResponse(city);
     }
 
+    @Cacheable(value = "cities")
     @Transactional(readOnly = true)
     public List<CityResponse> getAllCities() {
         return cityRepository.findAllByOrderByName().stream()
@@ -41,6 +45,7 @@ public class CityService {
                 .toList();
     }
 
+    @Cacheable(value = "cities", key = "#id")
     @Transactional(readOnly = true)
     public CityResponse getCityById(Long id) {
         City city = cityRepository.findById(id)
@@ -48,6 +53,7 @@ public class CityService {
         return toResponse(city);
     }
 
+    @CacheEvict(value = "cities", allEntries = true)
     public CityResponse updateCity(Long id, CityRequest request) {
         City city = cityRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("City", id));
@@ -62,6 +68,7 @@ public class CityService {
         return toResponse(city);
     }
 
+    @CacheEvict(value = "cities", allEntries = true)
     public void deleteCity(Long id) {
         if (!cityRepository.existsById(id)) {
             throw new ResourceNotFoundException("City", id);

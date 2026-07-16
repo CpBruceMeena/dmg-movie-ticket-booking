@@ -8,6 +8,8 @@ import com.dmg.moviebooking.entity.Show;
 import com.dmg.moviebooking.exception.ResourceNotFoundException;
 import com.dmg.moviebooking.repository.PricingTierRepository;
 import com.dmg.moviebooking.repository.ShowRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +33,7 @@ public class ShowService {
         this.pricingTierRepository = pricingTierRepository;
     }
 
+    @CacheEvict(value = "shows", allEntries = true)
     public ShowResponse createShow(ShowRequest request) {
         Screen screen = screenService.getScreenEntity(request.getScreenId());
 
@@ -55,6 +58,7 @@ public class ShowService {
         return toResponse(show);
     }
 
+    @Cacheable(value = "shows", key = "'screen-' + #screenId")
     @Transactional(readOnly = true)
     public List<ShowResponse> getShowsByScreenId(Long screenId) {
         screenService.getScreenEntity(screenId); // validate screen exists
@@ -63,6 +67,7 @@ public class ShowService {
                 .toList();
     }
 
+    @Cacheable(value = "shows", key = "'theater-' + #theaterId")
     @Transactional(readOnly = true)
     public List<ShowResponse> getShowsByTheaterId(Long theaterId) {
         return showRepository.findByTheaterId(theaterId).stream()
@@ -70,6 +75,7 @@ public class ShowService {
                 .toList();
     }
 
+    @Cacheable(value = "shows", key = "'id-' + #id")
     @Transactional(readOnly = true)
     public ShowResponse getShowById(Long id) {
         Show show = showRepository.findById(id)
