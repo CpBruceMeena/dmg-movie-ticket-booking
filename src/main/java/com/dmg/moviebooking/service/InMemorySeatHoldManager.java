@@ -24,6 +24,8 @@ public class InMemorySeatHoldManager implements SeatHoldManager {
     // Nested map: showId -> (seatId -> HoldInfo)
     private final Map<Long, Map<Long, HoldInfo>> holdsByShow = new ConcurrentHashMap<>();
 
+    private record HoldInfo(Long userId, LocalDateTime expiresAt) {}
+
     private final ScheduledExecutorService cleanupScheduler = Executors.newSingleThreadScheduledExecutor(r -> {
         Thread t = new Thread(r, "seat-hold-cleanup");
         t.setDaemon(true);
@@ -51,7 +53,7 @@ public class InMemorySeatHoldManager implements SeatHoldManager {
     }
 
     @Override
-    public boolean holdSeats(Long showId, Set<Long> seatIds, String userId, int durationMinutes) {
+    public boolean holdSeats(Long showId, Set<Long> seatIds, Long userId, int durationMinutes) {
         Map<Long, HoldInfo> showHolds = holdsByShow.computeIfAbsent(showId, k -> new ConcurrentHashMap<>());
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime expiresAt = now.plusMinutes(durationMinutes);
@@ -68,7 +70,7 @@ public class InMemorySeatHoldManager implements SeatHoldManager {
         for (Long seatId : seatIds) {
             showHolds.put(seatId, new HoldInfo(userId, expiresAt));
         }
-        log.debug("Held seats {} for user '{}' on show {} until {}", seatIds, userId, showId, expiresAt);
+        log.debug("Held seats {} for user id '{}' on show {} until {}", seatIds, userId, showId, expiresAt);
         return true;
     }
 
@@ -82,7 +84,7 @@ public class InMemorySeatHoldManager implements SeatHoldManager {
     }
 
     @Override
-    public void releaseSeatsByUser(Long showId, String userId) {
+    public void releaseSeatsByUser(Long showId, Long userId) {
         Map<Long, HoldInfo> showHolds = holdsByShow.get(showId);
         if (showHolds != null) {
             Set<Long> userSeats = showHolds.entrySet().stream()
@@ -91,13 +93,13 @@ public class InMemorySeatHoldManager implements SeatHoldManager {
                     .collect(Collectors.toSet());
             userSeats.forEach(showHolds::remove);
             if (!userSeats.isEmpty()) {
-                log.debug("Released seats {} for user '{}' on show {}", userSeats, userId, showId);
+                log.debug("Released seats {} for user id '{}' on show {}", userSeats, userId, showId);
             }
         }
     }
 
     @Override
-    public boolean isSeatHeld(Long showId, Long seatId, String excludeUserId) {
+    public boolean isSeatHeld(Long showId, Long seatId, Long excludeUserId) {
         Map<Long, HoldInfo> showHolds = holdsByShow.get(showId);
         if (showHolds == null) return false;
         HoldInfo hold = showHolds.get(seatId);
@@ -107,7 +109,7 @@ public class InMemorySeatHoldManager implements SeatHoldManager {
     }
 
     @Override
-    public Set<Long> getHeldSeatsByUser(Long showId, String userId) {
+    public Set<Long> getHeldSeatsByUser(Long showId, Long userId) {
         Map<Long, HoldInfo> showHolds = holdsByShow.get(showId);
         if (showHolds == null) return Set.of();
         LocalDateTime now = LocalDateTime.now();
@@ -137,7 +139,7 @@ public class InMemorySeatHoldManager implements SeatHoldManager {
     }
 
     @Override
-    public String getHoldingUser(Long showId, Long seatId) {
+    public Long getHoldingUser(Long showId, Long seatId) {
         Map<Long, HoldInfo> showHolds = holdsByShow.get(showId);
         if (showHolds == null) return null;
         HoldInfo hold = showHolds.get(seatId);
@@ -145,7 +147,7 @@ public class InMemorySeatHoldManager implements SeatHoldManager {
     }
 
     @Override
-    public boolean extendHold(Long showId, Set<Long> seatIds, String userId, int additionalMinutes) {
+    public boolean extendHold(Long showId, Set<Long> seatIds, Long userId, int additionalMinutes) {
         Map<Long, HoldInfo> showHolds = holdsByShow.get(showId);
         if (showHolds == null) return false;
         LocalDateTime now = LocalDateTime.now();
@@ -182,5 +184,4 @@ public class InMemorySeatHoldManager implements SeatHoldManager {
         }
     }
 
-    private record HoldInfo(String userId, LocalDateTime expiresAt) {}
 }

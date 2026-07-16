@@ -16,7 +16,7 @@ import java.util.List;
 @AllArgsConstructor
 public class BookingResponse {
     private Long id;
-    private String userId;
+    private Long userId;
     private Long showId;
     private String movieTitle;
     private String theaterName;
