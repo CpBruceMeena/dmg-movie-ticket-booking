@@ -24,11 +24,13 @@ public class Booking {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
 
-    @Column(name = "show_id", nullable = false)
-    private Long showId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "show_id", nullable = false)
+    private Show show;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
