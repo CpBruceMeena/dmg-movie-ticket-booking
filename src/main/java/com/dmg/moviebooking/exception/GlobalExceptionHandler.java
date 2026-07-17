@@ -1,8 +1,10 @@
 package com.dmg.moviebooking.exception;
 
 import com.dmg.moviebooking.dto.response.ErrorResponse;
+import jakarta.persistence.OptimisticLockException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -57,6 +59,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PaymentTimeoutException.class)
     public ResponseEntity<ErrorResponse> handlePaymentTimeout(PaymentTimeoutException ex, WebRequest request) {
         return buildResponse(HttpStatus.GONE, ex.getMessage(), request);
+    }
+
+    @ExceptionHandler({OptimisticLockException.class, OptimisticLockingFailureException.class})
+    public ResponseEntity<ErrorResponse> handleOptimisticLock(RuntimeException ex, WebRequest request) {
+        log.warn("Concurrent modification detected: {}", ex.getMessage());
+        return buildResponse(HttpStatus.CONFLICT,
+                "This booking was modified by another request. Please retry.", request);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
