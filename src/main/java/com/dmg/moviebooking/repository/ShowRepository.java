@@ -19,4 +19,6 @@ public interface ShowRepository extends JpaRepository<Show, Long> {
                                         @Param("to") LocalDateTime to);
 
     List<Show> findByMovieTitleContainingIgnoreCase(String movieTitle);
+
+    List<Show> findByStartTimeBetween(LocalDateTime start, LocalDateTime end);
 }

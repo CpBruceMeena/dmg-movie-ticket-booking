@@ -6,11 +6,14 @@ import com.dmg.moviebooking.entity.RefundPolicy;
 import com.dmg.moviebooking.exception.DuplicateResourceException;
 import com.dmg.moviebooking.exception.ResourceNotFoundException;
 import com.dmg.moviebooking.repository.RefundPolicyRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
 import java.util.List;
 
 @Service
@@ -18,6 +21,8 @@ import java.util.List;
 public class RefundPolicyService {
 
     private final RefundPolicyRepository refundPolicyRepository;
+
+    private static final Logger log = LoggerFactory.getLogger(RefundPolicyService.class);
 
     public RefundPolicyService(RefundPolicyRepository refundPolicyRepository) {
         this.refundPolicyRepository = refundPolicyRepository;
@@ -54,6 +59,33 @@ public class RefundPolicyService {
 
         policy = refundPolicyRepository.save(policy);
         return toResponse(policy);
+    }
+
+    /**
+     * Find the most generous applicable refund policy based on the duration
+     * remaining until the show starts.
+     * <p>
+     * Policies are ordered by hoursBeforeShow DESC (e.g., 48h → 24h → 2h).
+     * The first policy where {@code policy.duration <= timeUntilShow}
+     * is the most generous applicable one (full nanosecond precision).
+     *
+     * @param timeUntilShow duration remaining until the show start time
+     * @return the applicable RefundPolicy, or null if no policy applies (0% refund)
+     */
+    @Transactional(readOnly = true)
+    public RefundPolicy findApplicablePolicy(Duration timeUntilShow) {
+        List<RefundPolicy> policies = refundPolicyRepository.findAllByOrderByHoursBeforeShowDesc();
+        for (RefundPolicy policy : policies) {
+            Duration policyDuration = Duration.ofHours(policy.getHoursBeforeShow());
+            if (policyDuration.compareTo(timeUntilShow) <= 0) {
+                log.debug("Applicable refund policy: '{}' ({}%) for {} until show ({}h policy)",
+                        policy.getName(), policy.getRefundPercentage(),
+                        timeUntilShow, policy.getHoursBeforeShow());
+                return policy;
+            }
+        }
+        log.debug("No applicable refund policy found for {} until show", timeUntilShow);
+        return null;
     }
 
     private RefundPolicyResponse toResponse(RefundPolicy policy) {

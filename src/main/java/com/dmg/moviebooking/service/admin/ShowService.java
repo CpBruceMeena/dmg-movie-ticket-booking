@@ -17,6 +17,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -115,6 +116,15 @@ public class ShowService {
     public Show getShowEntity(Long id) {
         return showRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Show", id));
+    }
+
+    /**
+     * Find shows starting within a given time window.
+     * Used by the notification reminder scheduler to find upcoming shows.
+     */
+    @Transactional(readOnly = true)
+    public List<Show> getShowsStartingBetween(LocalDateTime start, LocalDateTime end) {
+        return showRepository.findByStartTimeBetween(start, end);
     }
 
     private ShowResponse toResponse(Show show) {
