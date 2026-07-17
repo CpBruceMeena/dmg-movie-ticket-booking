@@ -2,16 +2,15 @@ package com.dmg.moviebooking.service.admin;
 
 import com.dmg.moviebooking.dto.request.ShowRequest;
 import com.dmg.moviebooking.dto.response.ShowResponse;
-import com.dmg.moviebooking.entity.PricingTier;
+import com.dmg.moviebooking.dto.response.TheaterResponse;
+import com.dmg.moviebooking.entity.City;
+import com.dmg.moviebooking.entity.Movie;
 import com.dmg.moviebooking.entity.Screen;
 import com.dmg.moviebooking.entity.Show;
 import com.dmg.moviebooking.entity.ShowPricingTier;
+import com.dmg.moviebooking.entity.Theater;
 import com.dmg.moviebooking.exception.ResourceNotFoundException;
-import com.dmg.moviebooking.repository.PricingTierRepository;
-import com.dmg.moviebooking.repository.ScreenRepository;
-import com.dmg.moviebooking.repository.ShowPricingTierRepository;
-import com.dmg.moviebooking.repository.ShowRepository;
-import com.dmg.moviebooking.repository.TheaterRepository;
+import com.dmg.moviebooking.repository.*;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -31,17 +30,23 @@ public class ShowService {
     private final TheaterRepository theaterRepository;
     private final PricingTierRepository pricingTierRepository;
     private final ShowPricingTierRepository showPricingTierRepository;
+    private final MovieRepository movieRepository;
+    private final CityRepository cityRepository;
 
     public ShowService(ShowRepository showRepository,
                        ScreenRepository screenRepository,
                        TheaterRepository theaterRepository,
                        PricingTierRepository pricingTierRepository,
-                       ShowPricingTierRepository showPricingTierRepository) {
+                       ShowPricingTierRepository showPricingTierRepository,
+                       MovieRepository movieRepository,
+                       CityRepository cityRepository) {
         this.showRepository = showRepository;
         this.screenRepository = screenRepository;
         this.theaterRepository = theaterRepository;
         this.pricingTierRepository = pricingTierRepository;
         this.showPricingTierRepository = showPricingTierRepository;
+        this.movieRepository = movieRepository;
+        this.cityRepository = cityRepository;
     }
 
     @CacheEvict(value = "shows", allEntries = true)
@@ -51,12 +56,17 @@ public class ShowService {
             throw new ResourceNotFoundException("Screen", request.getScreenId());
         }
 
+        // Validate movie exists
+        if (!movieRepository.existsById(request.getMovieId())) {
+            throw new ResourceNotFoundException("Movie", request.getMovieId());
+        }
+
         if (!request.getEndTime().isAfter(request.getStartTime())) {
             throw new IllegalArgumentException("End time must be after start time");
         }
 
         Show show = Show.builder()
-                .movieTitle(request.getMovieTitle())
+                .movieId(request.getMovieId())
                 .startTime(request.getStartTime())
                 .endTime(request.getEndTime())
                 .basePrice(request.getBasePrice())
@@ -79,6 +89,13 @@ public class ShowService {
         return toResponse(show);
     }
 
+    @CacheEvict(value = "shows", allEntries = true)
+    public List<ShowResponse> createShows(List<ShowRequest> requests) {
+        return requests.stream()
+                .map(this::createShow)
+                .toList();
+    }
+
     @Cacheable(value = "shows", key = "'screen-' + #screenId")
     @Transactional(readOnly = true)
     public List<ShowResponse> getShowsByScreenId(Long screenId) {
@@ -92,9 +109,74 @@ public class ShowService {
         List<Long> screenIds = screenRepository.findByTheaterId(theaterId).stream()
                 .map(Screen::getId)
                 .toList();
-        return showRepository.findAll().stream()
-                .filter(s -> screenIds.contains(s.getScreenId()))
+        if (screenIds.isEmpty()) {
+            return List.of();
+        }
+        return showRepository.findByScreenIds(screenIds).stream()
                 .map(this::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ShowResponse> getShowsByMovieId(Long movieId, Long theaterId) {
+        // Validate movie exists
+        if (!movieRepository.existsById(movieId)) {
+            throw new ResourceNotFoundException("Movie", movieId);
+        }
+
+        List<Show> shows;
+        if (theaterId != null) {
+            // Filter by both movie and theater
+            List<Long> screenIds = screenRepository.findByTheaterId(theaterId).stream()
+                    .map(Screen::getId)
+                    .toList();
+            if (screenIds.isEmpty()) {
+                return List.of();
+            }
+            shows = showRepository.findByScreenIds(screenIds).stream()
+                    .filter(s -> s.getMovieId().equals(movieId))
+                    .toList();
+        } else {
+            shows = showRepository.findByMovieId(movieId);
+        }
+
+        return shows.stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<TheaterResponse> getTheatersByMovieId(Long movieId) {
+        // Validate movie exists
+        if (!movieRepository.existsById(movieId)) {
+            throw new ResourceNotFoundException("Movie", movieId);
+        }
+
+        List<Long> screenIds = showRepository.findScreenIdsByMovieId(movieId);
+        if (screenIds.isEmpty()) {
+            return List.of();
+        }
+
+        // Get distinct theater IDs from screens
+        List<Long> theaterIds = screenRepository.findAllById(screenIds).stream()
+                .map(Screen::getTheaterId)
+                .distinct()
+                .toList();
+
+        return theaterRepository.findAllById(theaterIds).stream()
+                .map(theater -> {
+                    String cityName = cityRepository.findById(theater.getCityId())
+                            .map(City::getName)
+                            .orElse("Unknown");
+                    return TheaterResponse.builder()
+                            .id(theater.getId())
+                            .name(theater.getName())
+                            .location(theater.getLocation())
+                            .cityId(theater.getCityId())
+                            .createdAt(theater.getCreatedAt())
+                            .updatedAt(theater.getUpdatedAt())
+                            .build();
+                })
                 .toList();
     }
 
@@ -135,8 +217,21 @@ public class ShowService {
         // Look up theater name via screen
         String theaterName = screenRepository.findById(show.getScreenId())
                 .flatMap(screen -> theaterRepository.findById(screen.getTheaterId()))
-                .map(theater -> theater.getName())
+                .map(Theater::getName)
                 .orElse("Unknown");
+
+        // Look up movie details
+        String movieTitle = "Unknown";
+        String movieGenre = null;
+        Integer movieDurationMinutes = null;
+        if (show.getMovieId() != null) {
+            Movie movie = movieRepository.findById(show.getMovieId()).orElse(null);
+            if (movie != null) {
+                movieTitle = movie.getTitle();
+                movieGenre = movie.getGenre();
+                movieDurationMinutes = movie.getDurationMinutes();
+            }
+        }
 
         Set<Long> pricingTierIds = showPricingTierRepository.findByShowId(show.getId())
                 .stream()
@@ -145,7 +240,10 @@ public class ShowService {
 
         return ShowResponse.builder()
                 .id(show.getId())
-                .movieTitle(show.getMovieTitle())
+                .movieId(show.getMovieId())
+                .movieTitle(movieTitle)
+                .movieGenre(movieGenre)
+                .movieDurationMinutes(movieDurationMinutes)
                 .startTime(show.getStartTime())
                 .endTime(show.getEndTime())
                 .basePrice(show.getBasePrice())

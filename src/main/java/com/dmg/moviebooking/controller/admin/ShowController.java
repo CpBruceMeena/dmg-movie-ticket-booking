@@ -30,11 +30,22 @@ public class ShowController {
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PostMapping("/batch")
+    @Operation(summary = "Create multiple shows in a single request across different screens and times")
+    public ResponseEntity<List<ShowResponse>> createShows(@Valid @RequestBody List<ShowRequest> requests) {
+        List<ShowResponse> responses = showService.createShows(requests);
+        return ResponseEntity.status(HttpStatus.CREATED).body(responses);
+    }
+
     @GetMapping
-    @Operation(summary = "Get shows by screen or theater ID")
+    @Operation(summary = "Get shows by screen, theater, or movie ID")
     public ResponseEntity<List<ShowResponse>> getShows(
             @RequestParam(required = false) Long screenId,
-            @RequestParam(required = false) Long theaterId) {
+            @RequestParam(required = false) Long theaterId,
+            @RequestParam(required = false) Long movieId) {
+        if (movieId != null) {
+            return ResponseEntity.ok(showService.getShowsByMovieId(movieId, theaterId));
+        }
         if (theaterId != null) {
             return ResponseEntity.ok(showService.getShowsByTheaterId(theaterId));
         }

@@ -1,7 +1,6 @@
 package com.dmg.moviebooking.dto.request;
 
 import jakarta.validation.constraints.Future;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
@@ -18,8 +17,9 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ShowRequest {
-    @NotBlank(message = "Movie title is required")
-    private String movieTitle;
+
+    @NotNull(message = "Movie ID is required")
+    private Long movieId;
 
     @NotNull(message = "Screen ID is required")
     private Long screenId;

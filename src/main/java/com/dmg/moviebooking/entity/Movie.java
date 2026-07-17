@@ -5,36 +5,40 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "shows")
+@Table(name = "movies")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Show {
+public class Movie {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "movie_id", nullable = false)
-    private Long movieId;
+    @Column(nullable = false)
+    private String title;
 
-    @Column(name = "start_time", nullable = false)
-    private LocalDateTime startTime;
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
-    @Column(name = "end_time", nullable = false)
-    private LocalDateTime endTime;
+    private String genre;
 
-    @Column(name = "base_price", nullable = false, precision = 10, scale = 2)
-    private BigDecimal basePrice;
+    @Column(name = "duration_minutes", nullable = false)
+    private Integer durationMinutes;
 
-    @Column(name = "screen_id", nullable = false)
-    private Long screenId;
+    private String language;
+
+    @Column(name = "release_date")
+    private LocalDate releaseDate;
+
+    @Column(name = "poster_url")
+    private String posterUrl;
 
     @CreationTimestamp
     @Column(nullable = false, updatable = false)

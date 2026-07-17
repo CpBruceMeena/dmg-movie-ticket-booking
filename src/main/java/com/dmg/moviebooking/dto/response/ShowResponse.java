@@ -15,7 +15,10 @@ import java.util.Set;
 @AllArgsConstructor
 public class ShowResponse {
     private Long id;
+    private Long movieId;
     private String movieTitle;
+    private String movieGenre;
+    private Integer movieDurationMinutes;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     private BigDecimal basePrice;
