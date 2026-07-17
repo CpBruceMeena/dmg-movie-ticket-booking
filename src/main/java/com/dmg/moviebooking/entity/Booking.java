@@ -50,6 +50,12 @@ public class Booking {
     @Column(name = "refund_amount", precision = 10, scale = 2)
     private BigDecimal refundAmount;
 
+    @Column(name = "discount_code_id")
+    private Long discountCodeId;
+
+    @Column(name = "discount_amount", precision = 10, scale = 2)
+    private BigDecimal discountAmount;
+
     @Version
     @Column(nullable = false)
     @Builder.Default

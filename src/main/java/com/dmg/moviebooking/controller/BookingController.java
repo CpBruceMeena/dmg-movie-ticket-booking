@@ -64,11 +64,12 @@ public class BookingController {
     }
 
     @PostMapping("/bookings/{bookingId}/pay")
-    @Operation(summary = "Process payment for held seats (must be within 5-minute window)")
+    @Operation(summary = "Process payment for held seats, optionally with a discount code")
     public ResponseEntity<BookingResponse> processPayment(@PathVariable Long bookingId,
+                                                           @RequestParam(required = false) String code,
                                                            Authentication authentication) {
         Long userId = resolveUserId(authentication);
-        BookingResponse response = bookingService.processPayment(bookingId, userId);
+        BookingResponse response = bookingService.processPayment(bookingId, userId, code);
         return ResponseEntity.ok(response);
     }
 

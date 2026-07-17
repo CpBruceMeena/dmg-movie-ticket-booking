@@ -20,6 +20,7 @@ public class CacheConfig {
                 "shows",
                 "pricingTiers",
                 "refundPolicies",
+                "discountCodes",
                 "users"
         );
     }

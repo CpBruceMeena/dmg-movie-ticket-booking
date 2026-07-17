@@ -27,6 +27,8 @@ public class BookingResponse {
     private LocalDateTime confirmedAt;
     private LocalDateTime refundedAt;
     private BigDecimal refundAmount;
+    private Long discountCodeId;
+    private BigDecimal discountAmount;
     private List<SeatInfo> seats;
     private LocalDateTime createdAt;
 
