@@ -45,6 +45,8 @@ public class SecurityConfig {
 
                         // Customer endpoints (accessible by both ADMIN and CUSTOMER)
                         .requestMatchers("/api/shows", "/api/shows/**").hasAnyRole("ADMIN", "CUSTOMER")
+                        .requestMatchers("/api/movies", "/api/movies/**").hasAnyRole("ADMIN", "CUSTOMER")
+                        .requestMatchers("/api/theaters/*/movies").hasAnyRole("ADMIN", "CUSTOMER")
                         .requestMatchers("/api/cities", "/api/theaters").hasAnyRole("ADMIN", "CUSTOMER")
                         .requestMatchers("/api/bookings/**").hasAnyRole("ADMIN", "CUSTOMER")
 

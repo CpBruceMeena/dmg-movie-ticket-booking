@@ -10,6 +10,13 @@ import com.dmg.moviebooking.enums.SeatType;
 import com.dmg.moviebooking.exception.BookingConflictException;
 import com.dmg.moviebooking.exception.InvalidBookingStateException;
 import com.dmg.moviebooking.exception.PaymentTimeoutException;
+import com.dmg.moviebooking.entity.*;
+import com.dmg.moviebooking.enums.BookingStatus;
+import com.dmg.moviebooking.enums.Role;
+import com.dmg.moviebooking.enums.SeatType;
+import com.dmg.moviebooking.exception.BookingConflictException;
+import com.dmg.moviebooking.exception.InvalidBookingStateException;
+import com.dmg.moviebooking.exception.PaymentTimeoutException;
 import com.dmg.moviebooking.repository.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -65,8 +72,12 @@ class BookingServiceTest {
     private RefundPolicyRepository refundPolicyRepository;
 
     @Autowired
+    private MovieRepository movieRepository;
+
+    @Autowired
     private CacheManager cacheManager;
 
+    private Movie testMovie;
     private Show testShow;
     private Long userId;
     private Long userId1;
@@ -136,8 +147,16 @@ class BookingServiceTest {
                     .build());
         }
 
+        testMovie = movieRepository.save(Movie.builder()
+                .title("Inception")
+                .description("A mind-bending thriller")
+                .genre("Sci-Fi")
+                .durationMinutes(148)
+                .language("English")
+                .build());
+
         testShow = showRepository.save(Show.builder()
-                .movieTitle("Inception")
+                .movieId(testMovie.getId())
                 .screenId(screen.getId())
                 // Add 1-minute buffer so that even after test setup time, the show is still 24h+
                 .startTime(LocalDateTime.now().plusDays(1).plusMinutes(1))

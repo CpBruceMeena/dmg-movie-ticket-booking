@@ -18,6 +18,7 @@ public class CacheConfig {
                 "screens",
                 "seats",
                 "shows",
+                "movies",
                 "pricingTiers",
                 "refundPolicies",
                 "discountCodes",

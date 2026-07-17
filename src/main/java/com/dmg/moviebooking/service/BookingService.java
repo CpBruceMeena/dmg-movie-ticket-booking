@@ -11,6 +11,7 @@ import com.dmg.moviebooking.exception.PaymentTimeoutException;
 import com.dmg.moviebooking.exception.ResourceNotFoundException;
 import com.dmg.moviebooking.repository.*;
 import com.dmg.moviebooking.service.admin.DiscountCodeService;
+import com.dmg.moviebooking.service.admin.MovieService;
 import com.dmg.moviebooking.service.admin.RefundPolicyService;
 import com.dmg.moviebooking.service.admin.ShowService;
 import org.springframework.cache.CacheManager;
@@ -47,6 +48,7 @@ public class BookingService {
     private final UserRepository userRepository;
     private final SeatHoldManager seatHoldManager;
     private final ShowService showService;
+    private final MovieRepository movieRepository;
     private final RefundPolicyService refundPolicyService;
     private final DiscountCodeService discountCodeService;
     private final NotificationService notificationService;
@@ -80,6 +82,7 @@ public class BookingService {
                           UserRepository userRepository,
                           SeatHoldManager seatHoldManager,
                           ShowService showService,
+                          MovieRepository movieRepository,
                           RefundPolicyService refundPolicyService,
                           DiscountCodeService discountCodeService,
                           NotificationService notificationService,
@@ -92,6 +95,7 @@ public class BookingService {
         this.userRepository = userRepository;
         this.seatHoldManager = seatHoldManager;
         this.showService = showService;
+        this.movieRepository = movieRepository;
         this.refundPolicyService = refundPolicyService;
         this.discountCodeService = discountCodeService;
         this.notificationService = notificationService;
@@ -208,9 +212,11 @@ public class BookingService {
         log.info("Booking {} created for user '{}' on show {} with {} seats (hold expires: {})",
                 savedBooking.getId(), userId, request.getShowId(), seats.size(), holdExpiresAt);
 
+        String movietitle = getMovieTitle(show);
+
         // Send async notification
         notificationService.notifySeatHoldStarted(
-                userId, savedBooking.getId(), show.getId(), show.getMovieTitle(),
+                userId, savedBooking.getId(), show.getId(), movietitle,
                 seats.size(), holdExpiresAt);
 
         return toResponse(savedBooking, show);
@@ -238,9 +244,10 @@ public class BookingService {
             booking.setCancelledAt(LocalDateTime.now());
             bookingRepository.save(booking);
 
+            String movietitle = getMovieTitle(timeoutShow);
             // Send async notification
             notificationService.notifyPaymentTimeout(
-                    userId, bookingId, timeoutShow.getId(), timeoutShow.getMovieTitle());
+                    userId, bookingId, timeoutShow.getId(), movietitle);
 
             log.warn("Payment timeout for booking {} - seats released", bookingId);
             throw new PaymentTimeoutException(
@@ -289,7 +296,7 @@ public class BookingService {
                 .flatMap(screen -> theaterRepository.findById(screen.getTheaterId()))
                 .map(Theater::getName).orElse("Unknown");
         notificationService.notifyBookingConfirmed(
-                userId, bookingId, show.getId(), show.getMovieTitle(),
+                userId, bookingId, show.getId(), getMovieTitle(show),
                 theaterName, screenName, show.getStartTime(),
                 bookingSeats.size(), finalAmount);
 
@@ -326,7 +333,7 @@ public class BookingService {
 
         // Send async notification
         notificationService.notifyBookingCancelled(
-                userId, bookingId, show.getId(), show.getMovieTitle(),
+                userId, bookingId, show.getId(), getMovieTitle(show),
                 "Cancelled by user");
 
         return toResponse(booking, show);
@@ -385,7 +392,7 @@ public class BookingService {
 
         // Send async notification
         notificationService.notifyBookingRefunded(
-                userId, bookingId, show.getId(), show.getMovieTitle(), refundAmount);
+                userId, bookingId, show.getId(), getMovieTitle(show), refundAmount);
 
         return toResponse(booking, show);
     }
@@ -433,7 +440,7 @@ public class BookingService {
             // Send async notification for expired hold
             Show expiredShow = getShowEntity(booking.getShowId());
             notificationService.notifyHoldExpired(
-                    booking.getUserId(), booking.getShowId(), expiredShow.getMovieTitle());
+                    booking.getUserId(), booking.getShowId(), getMovieTitle(expiredShow));
         }
     }
 
@@ -472,11 +479,17 @@ public class BookingService {
 
             notificationService.notifyShowReminder(
                     booking.getUserId(), booking.getId(), show.getId(),
-                    show.getMovieTitle(), theaterName, screenName, show.getStartTime());
+                    getMovieTitle(show), theaterName, screenName, show.getStartTime());
 
             log.info("Pre-show reminder sent for booking {} (user: {}, show: '{}' at {})",
-                    booking.getId(), booking.getUserId(), show.getMovieTitle(), show.getStartTime());
+                    booking.getId(), booking.getUserId(), getMovieTitle(show), show.getStartTime());
         }
+    }
+
+    private String getMovieTitle(Show show) {
+        return movieRepository.findById(show.getMovieId())
+                .map(Movie::getTitle)
+                .orElse("Unknown");
     }
 
     private Show getShowEntity(Long showId) {
@@ -500,7 +513,7 @@ public class BookingService {
         List<BookingSeat> bookingSeats = bookingSeatRepository.findByBookingId(booking.getId());
 
         // Look up show metadata
-        String movieTitle = show.getMovieTitle();
+        String movieTitle = getMovieTitle(show);
         String screenName = screenRepository.findById(show.getScreenId())
                 .map(Screen::getName)
                 .orElse("Unknown");
