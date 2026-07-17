@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 750" font-family="Segoe UI, Arial, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 800" font-family="Segoe UI, Arial, sans-serif">
   <defs>
     <filter id="shadow" x="-5%" y="-5%" width="115%" height="115%">
       <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="#00000022"/>
@@ -8,228 +8,285 @@
     <linearGradient id="layer3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#f59e0b"/><stop offset="100%" stop-color="#d97706"/></linearGradient>
     <linearGradient id="layer4" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ef4444"/><stop offset="100%" stop-color="#dc2626"/></linearGradient>
     <linearGradient id="crossCut" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#7c3aed"/></linearGradient>
+    <linearGradient id="newBadge" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#059669"/><stop offset="100%" stop-color="#047857"/></linearGradient>
   </defs>
 
   <!-- Background -->
-  <rect width="1000" height="750" fill="#f8fafc" rx="8"/>
+  <rect width="1100" height="800" fill="#f8fafc" rx="8"/>
 
   <!-- Title -->
-  <text x="500" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#1e293b">Application Architecture</text>
-  <text x="500" y="48" text-anchor="middle" font-size="12" fill="#64748b">DMG Movie Ticket Booking System — Layered Spring Boot Architecture</text>
+  <text x="550" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#1e293b">Application Architecture</text>
+  <text x="550" y="48" text-anchor="middle" font-size="12" fill="#64748b">DMG Movie Ticket Booking System — Layered Spring Boot Architecture</text>
 
   <!-- ==================== LAYER 1: CONTROLLER ==================== -->
   <g filter="url(#shadow)">
-    <rect x="30" y="65" width="940" height="120" rx="8" fill="white" stroke="#bfdbfe" stroke-width="2"/>
-    <rect x="30" y="65" width="940" height="32" rx="8" fill="url(#layer1)"/>
-    <rect y="89" x="30" width="940" height="8" fill="url(#layer1)"/>
-    <text x="500" y="86" text-anchor="middle" font-size="14" font-weight="bold" fill="white">Presentation Layer — REST Controllers</text>
+    <rect x="30" y="65" width="1040" height="100" rx="8" fill="white" stroke="#bfdbfe" stroke-width="2"/>
+    <rect x="30" y="65" width="1040" height="32" rx="8" fill="url(#layer1)"/>
+    <rect y="89" x="30" width="1040" height="8" fill="url(#layer1)"/>
+    <text x="550" y="86" text-anchor="middle" font-size="14" font-weight="bold" fill="white">Presentation Layer — REST Controllers</text>
 
-    <!-- Controller boxes -->
-    <g transform="translate(50, 108)">
-      <rect width="130" height="28" rx="14" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
-      <text x="65" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#1d4ed8">AuthController</text>
+    <!-- Admin Controllers -->
+    <g transform="translate(45, 108)">
+      <rect width="100" height="24" rx="12" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
+      <text x="50" y="17" text-anchor="middle" font-size="9" font-weight="bold" fill="#1d4ed8">CityController</text>
     </g>
-    <g transform="translate(195, 108)">
-      <rect width="130" height="28" rx="14" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
-      <text x="65" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#1d4ed8">BookingController</text>
+    <g transform="translate(155, 108)">
+      <rect width="120" height="24" rx="12" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
+      <text x="60" y="17" text-anchor="middle" font-size="9" font-weight="bold" fill="#1d4ed8">TheaterController</text>
     </g>
-    <g transform="translate(340, 108)">
-      <rect width="130" height="28" rx="14" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
-      <text x="65" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#1d4ed8">CityController</text>
+    <g transform="translate(285, 108)">
+      <rect width="120" height="24" rx="12" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
+      <text x="60" y="17" text-anchor="middle" font-size="9" font-weight="bold" fill="#1d4ed8">ScreenController</text>
     </g>
-    <g transform="translate(485, 108)">
-      <rect width="140" height="28" rx="14" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
-      <text x="70" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#1d4ed8">ScreenController</text>
+    <g transform="translate(415, 108)">
+      <rect width="110" height="24" rx="12" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
+      <text x="55" y="17" text-anchor="middle" font-size="9" font-weight="bold" fill="#1d4ed8">ShowController</text>
     </g>
-    <g transform="translate(195, 143)">
-      <rect width="130" height="28" rx="14" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
-      <text x="65" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#1d4ed8">ShowController</text>
+    <g transform="translate(535, 108)">
+      <rect width="110" height="24" rx="12" fill="#d1fae5" stroke="#34d399" stroke-width="1.5"/>
+      <text x="55" y="17" text-anchor="middle" font-size="9" font-weight="bold" fill="#065f46">MovieController</text>
     </g>
-    <g transform="translate(340, 143)">
-      <rect width="150" height="28" rx="14" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
-      <text x="75" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#1d4ed8">TheaterController</text>
+    <g transform="translate(655, 108)">
+      <rect width="120" height="24" rx="12" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
+      <text x="60" y="17" text-anchor="middle" font-size="9" font-weight="bold" fill="#1d4ed8">SeatLayoutCtlr</text>
     </g>
-    <g transform="translate(505, 143)">
-      <rect width="150" height="28" rx="14" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
-      <text x="75" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#1d4ed8">PricingController</text>
+    <g transform="translate(785, 108)">
+      <rect width="130" height="24" rx="12" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
+      <text x="65" y="17" text-anchor="middle" font-size="9" font-weight="bold" fill="#1d4ed8">PricingController</text>
     </g>
-    <g transform="translate(670, 143)">
-      <rect width="150" height="28" rx="14" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
-      <text x="75" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#1d4ed8">DiscountCodeCtlr</text>
+    <g transform="translate(45, 138)">
+      <rect width="100" height="24" rx="12" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
+      <text x="50" y="17" text-anchor="middle" font-size="9" font-weight="bold" fill="#1d4ed8">AuthController</text>
     </g>
-    <g transform="translate(835, 143)">
-      <rect width="120" height="28" rx="14" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
-      <text x="60" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#1d4ed8">HealthCtlr</text>
+    <g transform="translate(155, 138)">
+      <rect width="130" height="24" rx="12" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
+      <text x="65" y="17" text-anchor="middle" font-size="9" font-weight="bold" fill="#1d4ed8">BookingController</text>
+    </g>
+    <g transform="translate(295, 138)">
+      <rect width="140" height="24" rx="12" fill="#d1fae5" stroke="#34d399" stroke-width="1.5"/>
+      <text x="70" y="17" text-anchor="middle" font-size="9" font-weight="bold" fill="#065f46">MovieBrowserController</text>
+    </g>
+    <g transform="translate(445, 138)">
+      <rect width="130" height="24" rx="12" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
+      <text x="65" y="17" text-anchor="middle" font-size="9" font-weight="bold" fill="#1d4ed8">DiscountCodeCtlr</text>
+    </g>
+    <g transform="translate(585, 138)">
+      <rect width="130" height="24" rx="12" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
+      <text x="65" y="17" text-anchor="middle" font-size="9" font-weight="bold" fill="#1d4ed8">RefundPolicyCtlr</text>
+    </g>
+    <g transform="translate(725, 138)">
+      <rect width="90" height="24" rx="12" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
+      <text x="45" y="17" text-anchor="middle" font-size="9" font-weight="bold" fill="#1d4ed8">HealthCtlr</text>
     </g>
   </g>
 
+  <!-- NEW badges -->
+  <rect x="648" y="102" width="30" height="12" rx="3" fill="url(#newBadge)"/>
+  <text x="663" y="111" text-anchor="middle" font-size="7" font-weight="bold" fill="white">NEW</text>
+  <rect x="428" y="132" width="30" height="12" rx="3" fill="url(#newBadge)"/>
+  <text x="443" y="141" text-anchor="middle" font-size="7" font-weight="bold" fill="white">NEW</text>
+
   <!-- Arrow between layers -->
-  <line x1="500" y1="190" x2="500" y2="210" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrowDown)"/>
+  <line x1="550" y1="170" x2="550" y2="190" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrowDown)"/>
   <marker id="arrowDown" markerWidth="10" markerHeight="8" refX="5" refY="8" orient="auto">
     <path d="M0,0 L5,8 L10,0" fill="#94a3b8"/>
   </marker>
 
   <!-- ==================== LAYER 2: SERVICE ==================== -->
   <g filter="url(#shadow)">
-    <rect x="30" y="215" width="940" height="130" rx="8" fill="white" stroke="#a7f3d0" stroke-width="2"/>
-    <rect x="30" y="215" width="940" height="32" rx="8" fill="url(#layer2)"/>
-    <rect y="239" x="30" width="940" height="8" fill="url(#layer2)"/>
-    <text x="500" y="236" text-anchor="middle" font-size="14" font-weight="bold" fill="white">Business Logic Layer — Services</text>
+    <rect x="30" y="195" width="1040" height="130" rx="8" fill="white" stroke="#a7f3d0" stroke-width="2"/>
+    <rect x="30" y="195" width="1040" height="32" rx="8" fill="url(#layer2)"/>
+    <rect y="219" x="30" width="1040" height="8" fill="url(#layer2)"/>
+    <text x="550" y="216" text-anchor="middle" font-size="14" font-weight="bold" fill="white">Business Logic Layer — Services</text>
 
-    <g transform="translate(50, 258)">
+    <g transform="translate(45, 238)">
       <rect width="140" height="42" rx="6" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1"/>
       <text x="70" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="#065f46">BookingService</text>
       <text x="70" y="34" text-anchor="middle" font-size="9" fill="#047857">Hold → Pay → Cancel → Refund</text>
     </g>
-    <g transform="translate(205, 258)">
-      <rect width="140" height="42" rx="6" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1"/>
-      <text x="70" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="#065f46">LoginService</text>
-      <text x="70" y="34" text-anchor="middle" font-size="9" fill="#047857">Auth + JWT generation</text>
+    <g transform="translate(200, 238)">
+      <rect width="120" height="42" rx="6" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1"/>
+      <text x="60" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="#065f46">LoginService</text>
+      <text x="60" y="34" text-anchor="middle" font-size="9" fill="#047857">Auth + JWT gen</text>
     </g>
-    <g transform="translate(360, 258)">
-      <rect width="140" height="42" rx="6" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1"/>
-      <text x="70" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="#065f46">UserService</text>
-      <text x="70" y="34" text-anchor="middle" font-size="9" fill="#047857">Registration &amp; profile</text>
+    <g transform="translate(335, 238)">
+      <rect width="120" height="42" rx="6" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1"/>
+      <text x="60" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="#065f46">UserService</text>
+      <text x="60" y="34" text-anchor="middle" font-size="9" fill="#047857">Registration</text>
     </g>
-    <g transform="translate(515, 258)">
-      <rect width="140" height="42" rx="6" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1"/>
-      <text x="70" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="#065f46">ShowService</text>
-      <text x="70" y="34" text-anchor="middle" font-size="9" fill="#047857">Show management</text>
+    <g transform="translate(470, 238)">
+      <rect width="120" height="42" rx="6" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1"/>
+      <text x="60" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="#065f46">ShowService</text>
+      <text x="60" y="34" text-anchor="middle" font-size="9" fill="#047857">Show management</text>
     </g>
-    <g transform="translate(50, 308)">
+    <g transform="translate(605, 238)">
+      <rect width="120" height="42" rx="6" fill="#d1fae5" stroke="#34d399" stroke-width="1.5"/>
+      <text x="60" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="#065f46">MovieService</text>
+      <text x="60" y="34" text-anchor="middle" font-size="9" fill="#047857">CRUD + search</text>
+    </g>
+    <g transform="translate(740, 238)">
+      <rect width="120" height="42" rx="6" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1"/>
+      <text x="60" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="#065f46">TheaterService</text>
+      <text x="60" y="34" text-anchor="middle" font-size="9" fill="#047857">Theater mgmt</text>
+    </g>
+    <g transform="translate(875, 238)">
+      <rect width="120" height="42" rx="6" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1"/>
+      <text x="60" y="18" text-anchor="middle" font-size="11" font-weight="bold" fill="#065f46">ScreenService</text>
+      <text x="60" y="34" text-anchor="middle" font-size="9" fill="#047857">Screen mgmt</text>
+    </g>
+    <g transform="translate(45, 290)">
       <rect width="140" height="28" rx="6" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1"/>
       <text x="70" y="19" text-anchor="middle" font-size="11" font-weight="bold" fill="#065f46">SeatLayoutService</text>
     </g>
-    <g transform="translate(205, 308)">
-      <rect width="140" height="28" rx="6" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1"/>
-      <text x="70" y="19" text-anchor="middle" font-size="11" font-weight="bold" fill="#065f46">PricingService</text>
+    <g transform="translate(200, 290)">
+      <rect width="120" height="28" rx="6" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1"/>
+      <text x="60" y="19" text-anchor="middle" font-size="11" font-weight="bold" fill="#065f46">PricingService</text>
     </g>
-    <g transform="translate(360, 308)">
+    <g transform="translate(335, 290)">
       <rect width="140" height="28" rx="6" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1"/>
       <text x="70" y="19" text-anchor="middle" font-size="11" font-weight="bold" fill="#065f46">DiscountCodeService</text>
     </g>
-    <g transform="translate(515, 308)">
+    <g transform="translate(490, 290)">
       <rect width="140" height="28" rx="6" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1"/>
       <text x="70" y="19" text-anchor="middle" font-size="11" font-weight="bold" fill="#065f46">RefundPolicyService</text>
     </g>
-    <g transform="translate(670, 308)">
-      <rect width="140" height="28" rx="6" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1"/>
-      <text x="70" y="19" text-anchor="middle" font-size="11" font-weight="bold" fill="#065f46">CityService</text>
+    <g transform="translate(645, 290)">
+      <rect width="100" height="28" rx="6" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1"/>
+      <text x="50" y="19" text-anchor="middle" font-size="11" font-weight="bold" fill="#065f46">CityService</text>
     </g>
-    <g transform="translate(825, 308)">
-      <rect width="130" height="28" rx="6" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1"/>
-      <text x="65" y="19" text-anchor="middle" font-size="11" font-weight="bold" fill="#065f46">HealthService</text>
+    <g transform="translate(760, 290)">
+      <rect width="100" height="28" rx="6" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1"/>
+      <text x="50" y="19" text-anchor="middle" font-size="11" font-weight="bold" fill="#065f46">HealthService</text>
     </g>
   </g>
 
+  <!-- NEW badge for MovieService -->
+  <rect x="718" y="232" width="30" height="12" rx="3" fill="url(#newBadge)"/>
+  <text x="733" y="241" text-anchor="middle" font-size="7" font-weight="bold" fill="white">NEW</text>
+
   <!-- Arrow -->
-  <line x1="500" y1="350" x2="500" y2="370" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrowDown)"/>
+  <line x1="550" y1="330" x2="550" y2="350" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrowDown)"/>
 
   <!-- ==================== LAYER 3: DATA ACCESS ==================== -->
   <g filter="url(#shadow)">
-    <rect x="30" y="375" width="940" height="100" rx="8" fill="white" stroke="#fde68a" stroke-width="2"/>
-    <rect x="30" y="375" width="940" height="32" rx="8" fill="url(#layer3)"/>
-    <rect y="399" x="30" width="940" height="8" fill="url(#layer3)"/>
-    <text x="500" y="396" text-anchor="middle" font-size="14" font-weight="bold" fill="white">Data Access Layer — Repositories (Spring Data JPA)</text>
+    <rect x="30" y="355" width="1040" height="90" rx="8" fill="white" stroke="#fde68a" stroke-width="2"/>
+    <rect x="30" y="355" width="1040" height="32" rx="8" fill="url(#layer3)"/>
+    <rect y="379" x="30" width="1040" height="8" fill="url(#layer3)"/>
+    <text x="550" y="376" text-anchor="middle" font-size="14" font-weight="bold" fill="white">Data Access Layer — Repositories (Spring Data JPA)</text>
 
-    <g transform="translate(50, 418)">
-      <rect width="140" height="28" rx="14" fill="#fffbeb" stroke="#fcd34d" stroke-width="1"/>
-      <text x="70" y="19" text-anchor="middle" font-size="10" fill="#92400e">UserRepository</text>
+    <g transform="translate(45, 398)">
+      <rect width="120" height="24" rx="12" fill="#fffbeb" stroke="#fcd34d" stroke-width="1"/>
+      <text x="60" y="17" text-anchor="middle" font-size="9" fill="#92400e">UserRepository</text>
     </g>
-    <g transform="translate(205, 418)">
-      <rect width="150" height="28" rx="14" fill="#fffbeb" stroke="#fcd34d" stroke-width="1"/>
-      <text x="75" y="19" text-anchor="middle" font-size="10" fill="#92400e">BookingRepository</text>
-    </g>
-    <g transform="translate(370, 418)">
-      <rect width="150" height="28" rx="14" fill="#fffbeb" stroke="#fcd34d" stroke-width="1"/>
-      <text x="75" y="19" text-anchor="middle" font-size="10" fill="#92400e">BookingSeatRepository</text>
-    </g>
-    <g transform="translate(535, 418)">
-      <rect width="130" height="28" rx="14" fill="#fffbeb" stroke="#fcd34d" stroke-width="1"/>
-      <text x="65" y="19" text-anchor="middle" font-size="10" fill="#92400e">SeatRepository</text>
-    </g>
-    <g transform="translate(50, 450)">
+    <g transform="translate(180, 398)">
       <rect width="130" height="24" rx="12" fill="#fffbeb" stroke="#fcd34d" stroke-width="1"/>
-      <text x="65" y="16" text-anchor="middle" font-size="9" fill="#92400e">ShowRepository</text>
+      <text x="65" y="17" text-anchor="middle" font-size="9" fill="#92400e">BookingRepository</text>
     </g>
-    <g transform="translate(195, 450)">
-      <rect width="130" height="24" rx="12" fill="#fffbeb" stroke="#fcd34d" stroke-width="1"/>
-      <text x="65" y="16" text-anchor="middle" font-size="9" fill="#92400e">ScreenRepository</text>
-    </g>
-    <g transform="translate(340, 450)">
+    <g transform="translate(325, 398)">
       <rect width="140" height="24" rx="12" fill="#fffbeb" stroke="#fcd34d" stroke-width="1"/>
-      <text x="70" y="16" text-anchor="middle" font-size="9" fill="#92400e">TheaterRepository</text>
+      <text x="70" y="17" text-anchor="middle" font-size="9" fill="#92400e">BookingSeatRepo</text>
     </g>
-    <g transform="translate(495, 450)">
-      <rect width="140" height="24" rx="12" fill="#fffbeb" stroke="#fcd34d" stroke-width="1"/>
-      <text x="70" y="16" text-anchor="middle" font-size="9" fill="#92400e">PricingTierRepository</text>
+    <g transform="translate(480, 398)">
+      <rect width="110" height="24" rx="12" fill="#fffbeb" stroke="#fcd34d" stroke-width="1"/>
+      <text x="55" y="17" text-anchor="middle" font-size="9" fill="#92400e">SeatRepository</text>
     </g>
-    <g transform="translate(650, 450)">
-      <rect width="140" height="24" rx="12" fill="#fffbeb" stroke="#fcd34d" stroke-width="1"/>
-      <text x="70" y="16" text-anchor="middle" font-size="9" fill="#92400e">DiscountCodeRepo</text>
+    <g transform="translate(605, 398)">
+      <rect width="120" height="24" rx="12" fill="#fef3c7" stroke="#fbbf24" stroke-width="1.5"/>
+      <text x="60" y="17" text-anchor="middle" font-size="9" font-weight="bold" fill="#92400e">MovieRepository</text>
     </g>
-    <g transform="translate(805, 450)">
-      <rect width="150" height="24" rx="12" fill="#fffbeb" stroke="#fcd34d" stroke-width="1"/>
-      <text x="75" y="16" text-anchor="middle" font-size="9" fill="#92400e">CityRepository</text>
+    <g transform="translate(45, 430)">
+      <rect width="110" height="22" rx="11" fill="#fffbeb" stroke="#fcd34d" stroke-width="1"/>
+      <text x="55" y="16" text-anchor="middle" font-size="8" fill="#92400e">ShowRepository</text>
+    </g>
+    <g transform="translate(170, 430)">
+      <rect width="120" height="22" rx="11" fill="#fffbeb" stroke="#fcd34d" stroke-width="1"/>
+      <text x="60" y="16" text-anchor="middle" font-size="8" fill="#92400e">ScreenRepository</text>
+    </g>
+    <g transform="translate(305, 430)">
+      <rect width="130" height="22" rx="11" fill="#fffbeb" stroke="#fcd34d" stroke-width="1"/>
+      <text x="65" y="16" text-anchor="middle" font-size="8" fill="#92400e">TheaterRepository</text>
+    </g>
+    <g transform="translate(450, 430)">
+      <rect width="130" height="22" rx="11" fill="#fffbeb" stroke="#fcd34d" stroke-width="1"/>
+      <text x="65" y="16" text-anchor="middle" font-size="8" fill="#92400e">PricingTierRepo</text>
+    </g>
+    <g transform="translate(595, 430)">
+      <rect width="130" height="22" rx="11" fill="#fffbeb" stroke="#fcd34d" stroke-width="1"/>
+      <text x="65" y="16" text-anchor="middle" font-size="8" fill="#92400e">DiscountCodeRepo</text>
+    </g>
+    <g transform="translate(740, 430)">
+      <rect width="100" height="22" rx="11" fill="#fffbeb" stroke="#fcd34d" stroke-width="1"/>
+      <text x="50" y="16" text-anchor="middle" font-size="8" fill="#92400e">CityRepository</text>
     </g>
   </g>
 
+  <!-- NEW badge -->
+  <rect x="718" y="392" width="30" height="12" rx="3" fill="url(#newBadge)"/>
+  <text x="733" y="401" text-anchor="middle" font-size="7" font-weight="bold" fill="white">NEW</text>
+
   <!-- Arrow -->
-  <line x1="500" y1="480" x2="500" y2="500" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrowDown)"/>
+  <line x1="550" y1="450" x2="550" y2="470" stroke="#94a3b8" stroke-width="2" marker-end="url(#arrowDown)"/>
 
   <!-- ==================== LAYER 4: DATA STORE ==================== -->
   <g filter="url(#shadow)">
-    <rect x="30" y="505" width="940" height="60" rx="8" fill="white" stroke="#fecaca" stroke-width="2"/>
-    <rect x="30" y="505" width="940" height="32" rx="8" fill="url(#layer4)"/>
-    <rect y="529" x="30" width="940" height="8" fill="url(#layer4)"/>
-    <text x="500" y="526" text-anchor="middle" font-size="14" font-weight="bold" fill="white">Data Store</text>
+    <rect x="30" y="475" width="1040" height="60" rx="8" fill="white" stroke="#fecaca" stroke-width="2"/>
+    <rect x="30" y="475" width="1040" height="32" rx="8" fill="url(#layer4)"/>
+    <rect y="499" x="30" width="1040" height="8" fill="url(#layer4)"/>
+    <text x="550" y="496" text-anchor="middle" font-size="14" font-weight="bold" fill="white">Data Store</text>
 
-    <g transform="translate(180, 540)">
-      <rect width="200" height="20" rx="10" fill="#fef2f2" stroke="#fca5a5" stroke-width="1"/>
-      <text x="100" y="14" text-anchor="middle" font-size="10" font-weight="bold" fill="#991b1b">PostgreSQL / H2 (In-Memory)</text>
+    <g transform="translate(120, 510)">
+      <rect width="240" height="22" rx="11" fill="#fef2f2" stroke="#fca5a5" stroke-width="1"/>
+      <text x="120" y="16" text-anchor="middle" font-size="10" font-weight="bold" fill="#991b1b">PostgreSQL / H2 (In-Memory)</text>
     </g>
-    <g transform="translate(430, 540)">
-      <rect width="200" height="20" rx="10" fill="#fef2f2" stroke="#fca5a5" stroke-width="1"/>
-      <text x="100" y="14" text-anchor="middle" font-size="10" font-weight="bold" fill="#991b1b">Redis (Distributed Seat Holds)</text>
+    <g transform="translate(410, 510)">
+      <rect width="230" height="22" rx="11" fill="#fef2f2" stroke="#fca5a5" stroke-width="1"/>
+      <text x="115" y="16" text-anchor="middle" font-size="10" font-weight="bold" fill="#991b1b">Redis (Distributed Seat Holds)</text>
     </g>
-    <g transform="translate(680, 540)">
-      <rect width="160" height="20" rx="10" fill="#fef2f2" stroke="#fca5a5" stroke-width="1"/>
-      <text x="80" y="14" text-anchor="middle" font-size="10" font-weight="bold" fill="#991b1b">In-Memory Cache (Spring)</text>
+    <g transform="translate(690, 510)">
+      <rect width="180" height="22" rx="11" fill="#fef2f2" stroke="#fca5a5" stroke-width="1"/>
+      <text x="90" y="16" text-anchor="middle" font-size="10" font-weight="bold" fill="#991b1b">In-Memory Cache (Spring)</text>
     </g>
   </g>
 
   <!-- ==================== CROSS-CUTTING CONCERNS ==================== -->
   <g filter="url(#shadow)">
-    <rect x="30" y="590" width="940" height="145" rx="8" fill="white" stroke="#ddd6fe" stroke-width="2"/>
-    <rect x="30" y="590" width="940" height="32" rx="8" fill="url(#crossCut)"/>
-    <rect y="614" x="30" width="940" height="8" fill="url(#crossCut)"/>
-    <text x="500" y="611" text-anchor="middle" font-size="14" font-weight="bold" fill="white">Cross-Cutting Concerns</text>
+    <rect x="30" y="560" width="1040" height="135" rx="8" fill="white" stroke="#ddd6fe" stroke-width="2"/>
+    <rect x="30" y="560" width="1040" height="32" rx="8" fill="url(#crossCut)"/>
+    <rect y="584" x="30" width="1040" height="8" fill="url(#crossCut)"/>
+    <text x="550" y="581" text-anchor="middle" font-size="14" font-weight="bold" fill="white">Cross-Cutting Concerns</text>
 
-    <g transform="translate(55, 632)">
-      <rect width="280" height="92" rx="6" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="1"/>
-      <text x="140" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#5b21b6">Security (Spring Security)</text>
+    <g transform="translate(45, 600)">
+      <rect width="320" height="86" rx="6" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="1"/>
+      <text x="160" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#5b21b6">Security (Spring Security)</text>
       <text x="10" y="40" font-size="9" fill="#6d28d9">• JWT Bearer token auth (RSA-256)</text>
       <text x="10" y="55" font-size="9" fill="#6d28d9">• Role-based access: ADMIN / CUSTOMER</text>
-      <text x="10" y="70" font-size="9" fill="#6d28d9">• JwtAuthenticationFilter extracts token</text>
-      <text x="10" y="85" font-size="9" fill="#6d28d9">• Public endpoints: /auth, /health, /swagger</text>
+      <text x="10" y="70" font-size="9" fill="#6d28d9">• Public endpoints: /auth, /health, /swagger</text>
+      <text x="10" y="85" font-size="9" fill="#6d28d9">• Movie browse: /api/movies/**</text>
     </g>
 
-    <g transform="translate(360, 632)">
-      <rect width="280" height="92" rx="6" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="1"/>
-      <text x="140" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#5b21b6">Seat Hold Management</text>
+    <g transform="translate(385, 600)">
+      <rect width="320" height="86" rx="6" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="1"/>
+      <text x="160" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#5b21b6">Seat Hold Management</text>
       <text x="10" y="40" font-size="9" fill="#6d28d9">• SeatHoldManager (interface)</text>
       <text x="10" y="55" font-size="9" fill="#6d28d9">• RedisSeatHoldManager (distributed)</text>
       <text x="10" y="70" font-size="9" fill="#6d28d9">• InMemorySeatHoldManager (dev/test)</text>
       <text x="10" y="85" font-size="9" fill="#6d28d9">• Lua scripts for atomic operations</text>
     </g>
 
-    <g transform="translate(665, 632)">
-      <rect width="290" height="92" rx="6" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="1"/>
-      <text x="145" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#5b21b6">Other Concerns</text>
+    <g transform="translate(725, 600)">
+      <rect width="330" height="86" rx="6" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="1"/>
+      <text x="165" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#5b21b6">Other Concerns</text>
       <text x="10" y="40" font-size="9" fill="#6d28d9">• Rate Limiting (sliding window)</text>
       <text x="10" y="55" font-size="9" fill="#6d28d9">• Caching (Spring @Cacheable)</text>
       <text x="10" y="70" font-size="9" fill="#6d28d9">• Async Notifications (@Async)</text>
-      <text x="10" y="85" font-size="9" fill="#6d28d9">• Global Exception Handler</text>
+      <text x="10" y="85" font-size="9" fill="#6d28d9">• Flyway DB Migrations</text>
     </g>
+  </g>
+
+  <!-- Flyway mention -->
+  <g transform="translate(700, 710)">
+    <rect width="340" height="50" rx="6" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1"/>
+    <text x="170" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#065f46">Database Migrations</text>
+    <text x="10" y="40" font-size="9" fill="#047857">• Flyway V1 migration with final schema (PostgreSQL)</text>
   </g>
 </svg>
