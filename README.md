@@ -24,7 +24,7 @@ This project implements a **Movie Ticket Booking System** that supports:
 
 - **Multiple cities**, each with multiple **theaters**, each offering multiple **shows**.
 - **Seat-level booking** with time-bound holds that auto-release if payment isn't completed.
-- **Pricing tiers** (Regular, Premium, Weekend) and **discount codes**.
+- **Pricing tiers** (Regular, Premium, VIP) and **discount codes**.
 - **Full booking lifecycle**: browse → select → hold → pay → confirm → (cancel → refund).
 - **Concurrency-safe** seat allocation to prevent double-booking.
 - **Role-Based Access Control**: Admin and Customer roles.
@@ -48,9 +48,12 @@ This project implements a **Movie Ticket Booking System** that supports:
 | **Spring Data JPA / Hibernate** | ORM and database access. |
 | **Spring Security** | Role-based access control (RBAC). |
 | **Spring Validation** | Request payload validation. |
-| **H2 Database** | In-memory database for development. |
+| **PostgreSQL** | Primary database (production). |
+| **H2 Database** | In-memory database for development/testing. |
+| **Redis** | Distributed seat hold management. |
 | **Lombok** | Boilerplate reduction. |
 | **SpringDoc OpenAPI** | API documentation (Swagger UI). |
+| **JWT (jjwt)** | JSON Web Token generation & validation (RSA-256). |
 | **JUnit 5 + Mockito** | Unit and integration testing. |
 | **Maven** | Build and dependency management. |
 
@@ -69,30 +72,33 @@ All meaningful assumptions made during development are documented below.
 
 ### Booking & Concurrency
 
-- Seat **holds** expire after a configurable duration (default: 10 minutes). Held seats cannot be booked by other users.
-- Locking is handled at the **seat-show** level using **pessimistic locking** (`@Lock(PESSIMISTIC_WRITE)`) to prevent race conditions during concurrent booking attempts.
-- Booking states: `PENDING_PAYMENT` → `CONFIRMED` → `CANCELLED` / `REFUNDED`.
+- Seat **holds** expire after a configurable duration (default: 5 minutes). Held seats cannot be booked by other users.
+- Seat holds are managed via the **SeatHoldManager** interface (Redis or In-Memory), with atomic operations to prevent double-booking.
+- Booking status flow: `PENDING_PAYMENT` → `CONFIRMED` → `CANCELLED` / `REFUNDED`.
+- **Optimistic locking** (`@Version`) prevents race conditions during concurrent refund operations.
 
 ### Payments & Refunds
 
-- The payment system is **stubbed** — a `PaymentService` interface abstracts payment processing, with an in-memory stub implementation.
-- Refund policies are configurable per theater or globally. Default policy: **100% refund if cancelled more than 24 hours before show**, **50% if 2-24 hours before**, **0% if less than 2 hours**.
+- Payment processing is handled inline in `BookingService.processPayment()` (no separate `PaymentService` interface).
+- Refund policies are configurable via the `refund_policies` table. Default seeded policy: **100% refund if cancelled more than 24 hours before show**, **50% if 2-24 hours before**, **0% if less than 2 hours**.
 
 ### Notifications
 
-- Notifications are **asynchronous** using Spring's `@Async` with a `TaskExecutor`.
-- A stub `NotificationService` logs notifications instead of sending real emails/SMS.
+- Notifications are **asynchronous** using Spring's `@Async` with a `ThreadPoolTaskExecutor`.
+- A stub `LogNotificationService` logs notifications to a dedicated `NOTIFICATION` logger instead of sending real emails/SMS.
 
 ### Security
 
-- A **basic RBAC** system is implemented using Spring Security with in-memory users (Admin, Customer).
+- **JWT Bearer Token** authentication using RSA-256 signed tokens (asymmetric key pair).
+- **Role-based access control** (ADMIN / CUSTOMER) enforced via Spring Security URL patterns.
+- Users are stored in the database (`users` table), not in-memory.
 - Real authentication (OAuth/SSO/MFA) is **out of scope** per the requirements.
 
 ### API Design
 
 - All APIs are RESTful with consistent JSON responses.
 - Error responses follow a standard format: `{ "status": 400, "error": "Bad Request", "message": "...", "timestamp": "..." }`.
-- Pagination is supported for list endpoints.
+- List endpoints return all results (no pagination).
 
 ---
 
@@ -110,9 +116,20 @@ All meaningful assumptions made during development are documented below.
 | POST | `/api/admin/seats` | Configure seat layout for a screen |
 | POST | `/api/admin/shows` | Create a show |
 | GET | `/api/admin/shows?theaterId={id}` | List shows for a theater |
-| PUT | `/api/admin/pricing/{seatType}` | Update pricing for a seat type |
+| POST | `/api/admin/pricing-tiers` | Create a pricing tier |
+| GET | `/api/admin/pricing-tiers` | List all pricing tiers |
+| PUT | `/api/admin/pricing-tiers/{id}` | Update a pricing tier |
 | POST | `/api/admin/discount-codes` | Create a discount code |
-| PUT | `/api/admin/refund-policy` | Update refund policy |
+| POST | `/api/admin/refund-policies` | Create a refund policy |
+| GET | `/api/admin/refund-policies` | List all refund policies |
+| PUT | `/api/admin/refund-policies/{id}` | Update a refund policy |
+| GET | `/api/admin/cities/{id}` | Get city by ID |
+| PUT | `/api/admin/cities/{id}` | Update a city |
+| DELETE | `/api/admin/cities/{id}` | Delete a city |
+| GET | `/api/admin/theaters/{id}` | Get theater by ID |
+| GET | `/api/admin/shows/{id}` | Get show by ID |
+| GET | `/api/admin/screens/{id}` | Get screen by ID |
+| GET | `/api/admin/screens?theaterId={id}` | List screens in a theater |
 
 ### Customer APIs
 
@@ -125,8 +142,9 @@ All meaningful assumptions made during development are documented below.
 | POST | `/api/bookings/hold` | Hold seats (start booking) |
 | POST | `/api/bookings/{id}/pay` | Complete payment & confirm booking |
 | POST | `/api/bookings/{id}/cancel` | Cancel a booking |
+| POST | `/api/bookings/{id}/refund` | Refund a confirmed booking |
 | GET | `/api/bookings/{id}` | View booking details |
-| GET | `/api/bookings?userId={id}` | View user's booking history |
+| GET | `/api/bookings` | View authenticated user's booking history |
 
 ---
 
@@ -153,7 +171,7 @@ mvn spring-boot:run
 
 The application starts on `http://localhost:8080`.
 
-Access the H2 Console at `http://localhost:8080/h2-console` (JDBC URL: `jdbc:h2:mem:moviebooking`).
+Access the H2 Console at `http://localhost:8080/h2-console` (JDBC URL: `jdbc:h2:mem:movieticketbooking`).
 
 Access the **Swagger UI** at `http://localhost:8080/swagger-ui/index.html`.
 
@@ -178,6 +196,20 @@ git config core.hooksPath .githooks   # Enable branch protection hooks
 
 ---
 
+## Documentation
+
+Comprehensive technical documentation is available:
+
+- **[Technical Architecture](docs/technical-architecture.md)** — Complete architecture overview, database design, business decisions, application flows, and sequence diagrams.
+- **Architecture Diagrams (SVG)** — Located in `docs/diagrams/`:
+  - [Entity Relationship Diagram](docs/diagrams/er-diagram.svg) — All database tables, columns, and FK relationships
+  - [Application Architecture](docs/diagrams/application-architecture.svg) — Layered architecture with cross-cutting concerns
+  - [Auth Flow Sequence](docs/diagrams/sequence-auth-flow.svg) — Registration, login, and JWT token authentication
+  - [Booking Flow Sequence](docs/diagrams/sequence-booking-flow.svg) — Complete booking lifecycle
+  - [Show Management Sequence](docs/diagrams/sequence-show-management.svg) — City/theater/screen/show setup flow
+
+---
+
 ## Project Structure
 
 ```
@@ -185,22 +217,22 @@ src/
 ├── main/
 │   ├── java/com/dmg/moviebooking/
 │   │   ├── MovieBookingApplication.java
-│   │   ├── config/              # Security, Async, etc.
+│   │   ├── config/              # Security, Async, Cache, Rate Limiting, Redis, OpenAPI
 │   │   ├── controller/          # REST controllers
 │   │   ├── dto/                 # Request/Response DTOs
 │   │   ├── entity/              # JPA entities
 │   │   ├── enums/               # Enumerations
 │   │   ├── exception/           # Custom exceptions & handlers
+│   │   ├── ratelimiting/        # Rate limiting implementation
 │   │   ├── repository/          # JPA repositories
-│   │   ├── service/             # Business logic
-│   │   └── util/                # Utility classes
+│   │   ├── security/            # JWT auth filter, provider, entry point
+│   │   └── service/             # Business logic
 │   └── resources/
-│       └── application.properties
+│       ├── application.properties
+│       ├── application-h2.properties
+│       └── test/
 └── test/
-    └── java/com/dmg/moviebooking/
-        ├── controller/          # Controller integration tests
-        ├── service/             # Service unit tests
-        └── repository/          # Repository tests
+    └── java/com/dmg/moviebooking/  # Unit & integration tests
 ```
 
 ---

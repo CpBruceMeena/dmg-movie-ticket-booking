@@ -50,6 +50,9 @@ Desktop.ini
 log/
 logs/
 
+# Draw.io diagram source files (replaced by SVGs)
+*.drawio
+
 # Keys & Secrets
 keys/
 
