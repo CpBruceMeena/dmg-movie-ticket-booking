@@ -1,36 +1,37 @@
 # DMG Movie Ticket Booking - Architecture Documentation
 
-This directory contains architecture diagrams for the DMG Movie Ticket Booking System.
+This directory contains architecture documentation and diagrams for the DMG Movie Ticket Booking System.
 
 ## Diagrams
 
-### Class Diagram
-- **File**: [`diagrams/class-diagram.drawio`](diagrams/class-diagram.drawio)
-- **Description**: Shows all JPA entities, their fields, and relationships (one-to-many, many-to-many)
-- **Entities**: City, Theater, Screen, Seat, Show, PricingTier, RefundPolicy
-- **Relationships**:
-  - City `1 --*` Theater
-  - Theater `1 --*` Screen
-  - Screen `1 --*` Show
-  - Screen `1 --*` Seat
-  - Show `* --*` PricingTier (Many-to-Many via `show_pricing_tiers` join table)
+### Entity Relationship Diagrams
+
+| Diagram | File | Description |
+|---------|------|-------------|
+| **Hierarchical ER Diagram** | [`diagrams/hierarchical-er-diagram.svg`](diagrams/hierarchical-er-diagram.svg) | Top-to-bottom data flow: City → Theater → Screen → Show → Booking. Shows all FK relationships in a hierarchical layout. **(NEW)** |
+| **Flat ER Diagram** | [`diagrams/er-diagram.svg`](diagrams/er-diagram.svg) | All tables, columns, and FK relationships in a grid layout. Updated with movies table and shows.movie_id FK. |
+
+### Application Architecture
+
+| Diagram | File | Description |
+|---------|------|-------------|
+| **Application Architecture** | [`diagrams/application-architecture.svg`](diagrams/application-architecture.svg) | Layered architecture diagram showing the 4 layers (Controllers → Services → Repositories → Data Store), cross-cutting concerns, and all components. Updated with MovieController, MovieBrowserController, MovieService, MovieRepository. |
 
 ### Sequence Diagrams
 
 | Diagram | File | Description |
 |---------|------|-------------|
-| **Authentication Flow** | [`diagrams/sequence-auth-flow.drawio`](diagrams/sequence-auth-flow.drawio) | User login with JWT token generation via `POST /api/auth/login` |
-| **City-Theater-Screen Setup** | [`diagrams/sequence-city-theater-setup.drawio`](diagrams/sequence-city-theater-setup.drawio) | Admin creates city, then theater with city validation |
-| **Show Management Flow** | [`diagrams/sequence-show-management.drawio`](diagrams/sequence-show-management.drawio) | Admin creates a show with screen assignment, pricing tiers, and overlap validation |
-| **Customer Booking Flow** | [`diagrams/sequence-booking-flow.drawio`](diagrams/sequence-booking-flow.drawio) | Customer browses shows, views seat availability, holds seats (5-min payment window), and pays |
+| **Authentication Flow** | [`diagrams/sequence-auth-flow.svg`](diagrams/sequence-auth-flow.svg) | User login with JWT token generation via `POST /api/auth/login` |
+| **Booking Flow** | [`diagrams/sequence-booking-flow.svg`](diagrams/sequence-booking-flow.svg) | Complete booking lifecycle: hold → pay → cancel → refund |
+| **Show Management Flow** | [`diagrams/sequence-show-management.svg`](diagrams/sequence-show-management.svg) | Admin creates city, theater, screen, seat layout, movie, and then show (updated with movie creation step) |
 
 ## Viewing Diagrams
 
-You can view these diagrams by:
+All diagrams are **standalone SVG files** that render natively in GitHub - no plugins required. Simply open the `.svg` file in the repository browser.
 
-1. **Opening in draw.io** (https://app.diagrams.net/) - Click "Open Existing Diagram" and select the `.drawio` file
-2. **VS Code Extension** - Install the "Draw.io Integration" extension by Henning Dieterichs
-3. **GitHub** - GitHub supports rendering `.drawio` files natively in the repository view
+You can also:
+1. **Open in browser** - Download and open locally in any web browser
+2. **Edit in VS Code** - If you need to modify them, the SVGs use plain elements (rect, line, text, etc.) that can be edited in any text editor or SVG editor
 
 ## Technology Stack
 
@@ -42,5 +43,6 @@ You can view these diagrams by:
 | ORM | Spring Data JPA / Hibernate |
 | Auth | JWT with Spring Security |
 | API Docs | SpringDoc OpenAPI / Swagger UI |
+| DB Migrations | Flyway (PostgreSQL) |
 | Caching | In-memory (ConcurrentHashMap) |
 | Rate Limiting | Sliding Window Algorithm |

@@ -37,6 +37,7 @@ Key characteristics:
 | **Authentication** | JWT Bearer Tokens (RSA-256 signed) |
 | **Authorization** | Role-based (ADMIN / CUSTOMER) |
 | **Database** | PostgreSQL (production) / H2 (development) |
+| **Database Migrations** | Flyway V1 (PostgreSQL profile only) |
 | **Caching** | Spring `@Cacheable` for frequently accessed data |
 | **Seat Hold Management** | Redis (distributed) or In-Memory (dev/test) |
 | **Concurrency** | Atomic seat holds + Optimistic locking (`@Version`) |
@@ -56,6 +57,7 @@ Key characteristics:
 | PostgreSQL | 15+ | Primary database |
 | H2 Database | — | In-memory development database |
 | Redis | 7+ | Distributed seat hold management |
+| Flyway | — | Database migrations (PostgreSQL) |
 | Lombok | — | Boilerplate reduction |
 | SpringDoc OpenAPI | 2.3.0 | API documentation (Swagger UI) |
 | JWT (jjwt) | 0.12.x | JSON Web Token generation & validation |
@@ -77,7 +79,9 @@ The controllers handle HTTP request/response processing, validation, and Swagger
 |-----------|-----------|------|
 | `AuthController` | `/api/auth` | Login & Registration |
 | `BookingController` | `/api/bookings` | Booking lifecycle |
-| `ShowController` (Admin) | `/api/admin/shows` | Show CRUD |
+| `MovieBrowserController` | `/api/movies`, `/api/theaters/{id}/movies` | Public movie/theater browsing |
+| `ShowController` (Admin) | `/api/admin/shows` | Show CRUD + batch create |
+| `MovieController` (Admin) | `/api/admin/movies` | Movie CRUD + batch create |
 | `CityController` (Admin) | `/api/admin/cities` | City CRUD |
 | `ScreenController` (Admin) | `/api/admin/screens` | Screen CRUD |
 | `TheaterController` (Admin) | `/api/admin/theaters` | Theater CRUD |
@@ -98,7 +102,8 @@ Services encapsulate all business rules and transaction boundaries. Key services
 | `BookingService` | Complete booking lifecycle: hold → pay → cancel → refund |
 | `LoginService` | User authentication & JWT generation |
 | `UserService` | User registration & profile management |
-| `ShowService` | Show CRUD (admin) + seat availability queries |
+| `MovieService` | Movie CRUD + batch create + search by title/theater |
+| `ShowService` | Show CRUD + batch create + queries by movie/theater/screen |
 | `SeatLayoutService` | Configuring seat layout for screens |
 | `PricingService` | Pricing tier management |
 | `DiscountCodeService` | Discount code validation & redemption |
@@ -130,6 +135,7 @@ Spring Data JPA repositories providing CRUD and custom query methods.
 | **Caching** | `@Cacheable` on repositories/services |
 | **Async Processing** | `@Async` for notifications |
 | **Exception Handling** | `@ControllerAdvice` global handler |
+| **Database Migrations** | Flyway V1 (PostgreSQL) |
 | **API Documentation** | SpringDoc OpenAPI (Swagger UI at `/swagger-ui/index.html`) |
 
 ---
@@ -146,7 +152,8 @@ Spring Data JPA repositories providing CRUD and custom query methods.
 | `theaters` | Theaters within cities | `city_id` → `cities.id` |
 | `screens` | Screens within theaters | `theater_id` → `theaters.id` |
 | `seats` | Individual seats in screens | `screen_id` → `screens.id` |
-| `shows` | Movie showtimes | `screen_id` → `screens.id` |
+| `shows` | Movie showtimes | `screen_id` → `screens.id`, `movie_id` → `movies.id` |
+| `movies` | Movie catalog (standalone management) | — |
 | `users` | User accounts (Admin/Customer) | — |
 | `bookings` | Booking transactions | `user_id` → `users.id`, `show_id` → `shows.id`, `discount_code_id` → `discount_codes.id` |
 | `booking_seats` | Individual seat bookings | `booking_id` → `bookings.id`, `seat_id` → `seats.id` |
@@ -154,6 +161,12 @@ Spring Data JPA repositories providing CRUD and custom query methods.
 | `show_pricing_tiers` | Junction: show ↔ pricing tiers | `show_id` → `shows.id`, `pricing_tier_id` → `pricing_tiers.id` |
 | `discount_codes` | One-time-use discount codes | — |
 | `refund_policies` | Configurable refund rules | — |
+
+### Hierarchical Diagram
+
+![Hierarchical Entity Relationship Diagram](diagrams/hierarchical-er-diagram.svg)
+
+For a top-to-bottom visualization of how tables relate through their FK chains (City → Theater → Screen → Show → Booking, etc.), see the [Hierarchical ER Diagram](diagrams/hierarchical-er-diagram.svg).
 
 ### Design Decisions
 
@@ -163,11 +176,16 @@ Spring Data JPA repositories providing CRUD and custom query methods.
    - Clear separation between entities
    - Simpler serialization (no circular references)
 
-2. **Soft references**: Each entity carries only FK IDs, not full object references. Service code manually looks up related entities when needed.
+2. **Standalone movie management**: Movies have their own table and CRUD operations, replacing the previous inline `movie_title` string on shows. This enables:
+   - Movie search independent of show schedules
+   - Rich movie metadata (genre, duration, language, etc.)
+   - Cross-referencing: all theaters showing a movie / all movies in a theater
 
-3. **Optimistic locking**: The `bookings` table has a `@Version` column to prevent race conditions during concurrent refund operations.
+3. **Soft references**: Each entity carries only FK IDs, not full object references. Service code manually looks up related entities when needed.
 
-4. **Timestamp lifecycle**: All entities have `created_at` and `updated_at` managed by `@CreationTimestamp` and `@UpdateTimestamp`.
+4. **Optimistic locking**: The `bookings` table has a `@Version` column to prevent race conditions during concurrent refund operations.
+
+5. **Timestamp lifecycle**: All entities have `created_at` and `updated_at` managed by `@CreationTimestamp` and `@UpdateTimestamp`.
 
 ---
 
@@ -270,7 +288,7 @@ Hold Seats → PENDING_PAYMENT (hold_expires_at = now + 5min)
 
 ### 9. Caching Strategy
 
-**Decision:** Spring `@Cacheable` on frequently accessed data: cities, theaters, screens, seats, shows, pricing tiers, refund policies, discount codes, users.
+**Decision:** Spring `@Cacheable` on frequently accessed data: cities, theaters, screens, seats, shows, movies, pricing tiers, refund policies, discount codes, users.
 
 **Rationale:**
 - Reduces database load for read-heavy operations
@@ -351,7 +369,7 @@ Hold Seats → PENDING_PAYMENT (hold_expires_at = now + 5min)
    - Updates booking to `REFUNDED` with refund amount
    - Sends async refund notification
 
-### City → Theater → Screen → Show Setup (Admin)
+### City → Theater → Screen → Movie → Show Setup (Admin)
 
 ![Show Management Sequence](diagrams/sequence-show-management.svg)
 
@@ -360,7 +378,25 @@ Hold Seats → PENDING_PAYMENT (hold_expires_at = now + 5min)
 2. Create Theater → `POST /api/admin/theaters` (references city_id)
 3. Create Screen → `POST /api/admin/screens` (references theater_id)
 4. Configure Seats → `POST /api/admin/seats` (references screen_id)
-5. Create Show → `POST /api/admin/shows` (references screen_id)
+5. Create Movie → `POST /api/admin/movies` (returns movie_id)
+6. Create Show → `POST /api/admin/shows` (references movie_id + screen_id)
+
+### Movie & Show Browsing Flow
+
+1. **Browse/Search Movies** → `GET /api/movies?search=...`
+   - Returns all movies or filtered by title (case-insensitive)
+   
+2. **Get Movie Details** → `GET /api/movies/{id}`
+   - Returns full movie metadata
+   
+3. **Get Theaters by Movie** → `GET /api/movies/{id}/theaters`
+   - Returns all theaters showing a particular movie
+   
+4. **Get Shows by Movie** → `GET /api/movies/{id}/shows?theaterId=...`
+   - Returns all shows for a movie, optionally filtered by theater
+   
+5. **Get Movies by Theater** → `GET /api/theaters/{theaterId}/movies`
+   - Returns all movies playing at a specific theater
 
 ---
 
@@ -374,39 +410,17 @@ Hold Seats → PENDING_PAYMENT (hold_expires_at = now + 5min)
 | POST | `/api/auth/login` | No | — |
 | POST | `/api/auth/register` | No | — |
 
-### Admin Endpoints (require `ADMIN` role)
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/admin/cities` | Create city |
-| GET | `/api/admin/cities` | List cities |
-| POST | `/api/admin/theaters` | Create theater |
-| GET | `/api/admin/theaters?cityId={id}` | List theaters |
-| POST | `/api/admin/screens` | Create screen |
-| POST | `/api/admin/seats` | Configure seat layout |
-| POST | `/api/admin/shows` | Create show |
-| GET | `/api/admin/shows?theaterId={id}` | List shows |
-| POST | `/api/admin/pricing-tiers` | Create a pricing tier |
-| GET | `/api/admin/pricing-tiers` | List all pricing tiers |
-| PUT | `/api/admin/pricing-tiers/{id}` | Update a pricing tier |
-| POST | `/api/admin/discount-codes` | Create discount code |
-| POST | `/api/admin/refund-policies` | Create a refund policy |
-| GET | `/api/admin/refund-policies` | List all refund policies |
-| PUT | `/api/admin/refund-policies/{id}` | Update a refund policy |
-| GET | `/api/admin/cities/{id}` | Get city by ID |
-| PUT | `/api/admin/cities/{id}` | Update a city |
-| DELETE | `/api/admin/cities/{id}` | Delete a city |
-| GET | `/api/admin/theaters/{id}` | Get theater by ID |
-| GET | `/api/admin/shows/{id}` | Get show by ID |
-| GET | `/api/admin/screens/{id}` | Get screen by ID |
-| GET | `/api/admin/screens?theaterId={id}` | List screens in a theater |
-
 ### Customer Endpoints (require `ADMIN` or `CUSTOMER` role)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/cities` | List cities |
 | GET | `/api/theaters?cityId={id}` | List theaters |
+| GET | `/api/movies?search={query}` | Browse/search movies |
+| GET | `/api/movies/{id}` | Get movie details |
+| GET | `/api/movies/{id}/theaters` | Theaters showing a movie |
+| GET | `/api/movies/{id}/shows?theaterId={id}` | Shows for a movie |
+| GET | `/api/theaters/{theaterId}/movies` | Movies in a theater |
 | GET | `/api/shows?theaterId={id}` | List shows |
 | GET | `/api/shows/{showId}/seats` | View seat availability |
 | POST | `/api/bookings/hold` | Hold seats |
@@ -415,6 +429,38 @@ Hold Seats → PENDING_PAYMENT (hold_expires_at = now + 5min)
 | POST | `/api/bookings/{id}/refund` | Request refund |
 | GET | `/api/bookings/{id}` | View booking detail |
 | GET | `/api/bookings` | View authenticated user's booking history |
+
+### Admin Endpoints (require `ADMIN` role)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/admin/cities` | Create city |
+| GET | `/api/admin/cities` | List cities |
+| GET/PUT/DELETE | `/api/admin/cities/{id}` | City by ID / Update / Delete |
+| POST | `/api/admin/theaters` | Create theater |
+| GET | `/api/admin/theaters?cityId={id}` | List theaters |
+| GET | `/api/admin/theaters/{id}` | Get theater by ID |
+| POST | `/api/admin/screens` | Create screen |
+| GET | `/api/admin/screens?theaterId={id}` | List screens |
+| GET | `/api/admin/screens/{id}` | Get screen by ID |
+| POST | `/api/admin/seats` | Configure seat layout |
+| POST | `/api/admin/movies` | Create movie |
+| POST | `/api/admin/movies/batch` | Create multiple movies |
+| PUT | `/api/admin/movies/{id}` | Update movie |
+| DELETE | `/api/admin/movies/{id}` | Delete movie |
+| GET | `/api/admin/movies` | List all movies |
+| GET | `/api/admin/movies/{id}` | Get movie by ID |
+| POST | `/api/admin/shows` | Create show (references movie_id) |
+| POST | `/api/admin/shows/batch` | Create multiple shows |
+| GET | `/api/admin/shows?screenId={id}&theaterId={id}&movieId={id}` | List shows |
+| GET | `/api/admin/shows/{id}` | Get show by ID |
+| POST | `/api/admin/pricing-tiers` | Create a pricing tier |
+| GET | `/api/admin/pricing-tiers` | List all pricing tiers |
+| PUT | `/api/admin/pricing-tiers/{id}` | Update a pricing tier |
+| POST | `/api/admin/discount-codes` | Create discount code |
+| POST | `/api/admin/refund-policies` | Create a refund policy |
+| GET | `/api/admin/refund-policies` | List all refund policies |
+| PUT | `/api/admin/refund-policies/{id}` | Update a refund policy |
 
 Default credentials:
 
@@ -434,6 +480,7 @@ Default credentials:
 3. **Validation**: `JwtAuthenticationFilter` extracts Bearer token → verifies with RSA public key → extracts username/roles → sets Spring Security context
 4. **Authorization**: `SecurityConfig` defines URL → role mappings:
    - `/api/admin/**` → `ROLE_ADMIN`
+   - `/api/movies/**`, `/api/theaters/*/movies` → `ROLE_ADMIN` or `ROLE_CUSTOMER`
    - `/api/bookings/**`, `/api/shows/**`, `/api/cities`, `/api/theaters` → `ROLE_ADMIN` or `ROLE_CUSTOMER`
    - `/api/auth/**`, `/api/health`, `/swagger-ui/**`, `/v3/api-docs/**`, `/h2-console/**` → Public
 
@@ -503,11 +550,12 @@ The system handles several concurrency scenarios:
 
 | Diagram | File | Description |
 |---------|------|-------------|
-| Entity Relationship Diagram | [er-diagram.svg](diagrams/er-diagram.svg) | All tables, columns, and FK relationships |
-| Application Architecture | [application-architecture.svg](diagrams/application-architecture.svg) | Layered architecture with cross-cutting concerns |
+| Hierarchical ER Diagram | [hierarchical-er-diagram.svg](diagrams/hierarchical-er-diagram.svg) | Top-to-bottom table relationships with FK chains **(NEW)** |
+| Entity Relationship Diagram | [er-diagram.svg](diagrams/er-diagram.svg) | All tables, columns, and FK relationships (updated) |
+| Application Architecture | [application-architecture.svg](diagrams/application-architecture.svg) | Layered architecture with cross-cutting concerns (updated) |
 | Auth Flow Sequence | [sequence-auth-flow.svg](diagrams/sequence-auth-flow.svg) | Registration, login, and JWT token authentication |
 | Booking Flow Sequence | [sequence-booking-flow.svg](diagrams/sequence-booking-flow.svg) | Complete booking lifecycle: hold → pay → cancel → refund |
-| Show Management Sequence | [sequence-show-management.svg](diagrams/sequence-show-management.svg) | City → Theater → Screen → Seat → Show setup flow |
+| Show Management Sequence | [sequence-show-management.svg](diagrams/sequence-show-management.svg) | City → Theater → Screen → Movie → Show setup (updated) |
 
 ---
 
