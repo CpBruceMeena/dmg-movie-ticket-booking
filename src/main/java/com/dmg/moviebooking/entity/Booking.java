@@ -44,6 +44,12 @@ public class Booking {
     @Column(name = "cancelled_at")
     private LocalDateTime cancelledAt;
 
+    @Column(name = "refunded_at")
+    private LocalDateTime refundedAt;
+
+    @Column(name = "refund_amount", precision = 10, scale = 2)
+    private BigDecimal refundAmount;
+
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;

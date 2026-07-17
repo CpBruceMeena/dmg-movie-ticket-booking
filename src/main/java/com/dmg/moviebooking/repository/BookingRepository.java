@@ -17,4 +17,6 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     long countByShowIdAndStatus(Long showId, BookingStatus status);
 
     List<Booking> findByStatusAndHoldExpiresAtBefore(BookingStatus status, LocalDateTime now);
+
+    List<Booking> findByStatusAndShowIdIn(BookingStatus status, List<Long> showIds);
 }

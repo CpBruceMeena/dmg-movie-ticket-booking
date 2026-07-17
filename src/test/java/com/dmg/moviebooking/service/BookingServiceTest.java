@@ -15,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cache.CacheManager;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,10 +61,19 @@ class BookingServiceTest {
     @Autowired
     private SeatHoldManager seatHoldManager;
 
+    @Autowired
+    private RefundPolicyRepository refundPolicyRepository;
+
+    @Autowired
+    private CacheManager cacheManager;
+
     private Show testShow;
     private Long userId;
     private Long userId1;
     private Long userId2;
+    private RefundPolicy fullRefundPolicy;
+    private RefundPolicy halfRefundPolicy;
+    private RefundPolicy noRefundPolicy;
 
     @BeforeEach
     void setUp() {
@@ -129,10 +139,41 @@ class BookingServiceTest {
         testShow = showRepository.save(Show.builder()
                 .movieTitle("Inception")
                 .screenId(screen.getId())
-                .startTime(LocalDateTime.now().plusDays(1))
-                .endTime(LocalDateTime.now().plusDays(1).plusHours(2))
+                // Add 1-minute buffer so that even after test setup time, the show is still 24h+
+                .startTime(LocalDateTime.now().plusDays(1).plusMinutes(1))
+                .endTime(LocalDateTime.now().plusDays(1).plusMinutes(1).plusHours(2))
                 .basePrice(BigDecimal.valueOf(300))
                 .build());
+
+        // Create refund policies (ordered by hoursBeforeShow DESC)
+        fullRefundPolicy = refundPolicyRepository.save(RefundPolicy.builder()
+                .name("Full Refund")
+                .hoursBeforeShow(48)
+                .refundPercentage(100)
+                .build());
+        halfRefundPolicy = refundPolicyRepository.save(RefundPolicy.builder()
+                .name("Half Refund")
+                .hoursBeforeShow(24)
+                .refundPercentage(50)
+                .build());
+        noRefundPolicy = refundPolicyRepository.save(RefundPolicy.builder()
+                .name("No Refund")
+                .hoursBeforeShow(2)
+                .refundPercentage(0)
+                .build());
+
+        // Evict caches that may contain stale data from previous test methods
+        // (@Transactional rollback doesn't clear Spring caches)
+        evictCaches();
+    }
+
+    private void evictCaches() {
+        for (String cacheName : new String[]{"shows", "refundPolicies"}) {
+            org.springframework.cache.Cache cache = cacheManager.getCache(cacheName);
+            if (cache != null) {
+                cache.clear();
+            }
+        }
     }
 
     @Test
@@ -297,6 +338,131 @@ class BookingServiceTest {
             assertFalse(heldSeatIds.contains(seatId),
                     "Seat " + seatId + " should not be held after timeout");
         }
+    }
+
+    @Test
+    void refundConfirmedBooking_ShouldCalculateCorrectRefundAmount() {
+        // The show starts 24 hours from now. With refund policies:
+        // 48h → 100% (doesn't apply since 24 < 48)
+        // 24h → 50%  (applies since 24 <= 24)
+        // 2h  → 0%   (would apply if others don't, but 24h policy matches first)
+        List<Seat> seats = seatRepository.findByScreenId(testShow.getScreenId());
+        Set<Long> seatIds = Set.of(seats.get(0).getId(), seats.get(1).getId());
+
+        BookingResponse held = bookingService.holdSeats(
+                BookingRequest.builder().showId(testShow.getId()).seatIds(seatIds).build(),
+                userId);
+        BookingResponse confirmed = bookingService.processPayment(held.getId(), userId);
+
+        assertEquals(BookingStatus.CONFIRMED, confirmed.getStatus());
+        assertEquals(BigDecimal.valueOf(600), confirmed.getTotalAmount()); // 2 seats × 300
+
+        // Refund the booking
+        BookingResponse refunded = bookingService.refundBooking(confirmed.getId(), userId);
+
+        assertEquals(BookingStatus.REFUNDED, refunded.getStatus());
+        // Expected refund: 600 * 50% = 300
+        assertEquals(BigDecimal.valueOf(300).setScale(2), refunded.getRefundAmount());
+        assertNotNull(refunded.getRefundedAt());
+    }
+
+    @Test
+    void refundBooking_ShouldThrow_WhenBookingNotConfirmed() {
+        List<Seat> seats = seatRepository.findByScreenId(testShow.getScreenId());
+        Set<Long> seatIds = Set.of(seats.get(0).getId());
+
+        // Hold but don't pay — PENDING_PAYMENT status
+        BookingResponse held = bookingService.holdSeats(
+                BookingRequest.builder().showId(testShow.getId()).seatIds(seatIds).build(),
+                userId);
+
+        assertThrows(InvalidBookingStateException.class,
+                () -> bookingService.refundBooking(held.getId(), userId));
+    }
+
+    @Test
+    void refundBooking_ShouldThrow_WhenAlreadyCancelled() {
+        List<Seat> seats = seatRepository.findByScreenId(testShow.getScreenId());
+        Set<Long> seatIds = Set.of(seats.get(0).getId());
+
+        BookingResponse held = bookingService.holdSeats(
+                BookingRequest.builder().showId(testShow.getId()).seatIds(seatIds).build(),
+                userId);
+        BookingResponse confirmed = bookingService.processPayment(held.getId(), userId);
+
+        // Cancel first
+        bookingService.refundBooking(confirmed.getId(), userId);
+
+        // Try to refund again
+        assertThrows(InvalidBookingStateException.class,
+                () -> bookingService.refundBooking(confirmed.getId(), userId));
+    }
+
+    @Test
+    void refundBooking_ShouldReleaseSeats() {
+        List<Seat> seats = seatRepository.findByScreenId(testShow.getScreenId());
+        Set<Long> seatIds = Set.of(seats.get(0).getId(), seats.get(1).getId());
+
+        BookingResponse held = bookingService.holdSeats(
+                BookingRequest.builder().showId(testShow.getId()).seatIds(seatIds).build(),
+                userId);
+        BookingResponse confirmed = bookingService.processPayment(held.getId(), userId);
+
+        assertEquals(BookingStatus.CONFIRMED, confirmed.getStatus());
+
+        // Verify seats show as BOOKED before refund
+        List<SeatAvailabilityResponse> beforeRefund = bookingService.getSeatAvailability(testShow.getId());
+        long bookedBefore = beforeRefund.stream()
+                .filter(s -> s.getStatus() == SeatAvailabilityResponse.Status.BOOKED)
+                .count();
+        assertEquals(2, bookedBefore);
+
+        // Refund
+        bookingService.refundBooking(confirmed.getId(), userId);
+
+        // Verify seats are available again
+        List<SeatAvailabilityResponse> afterRefund = bookingService.getSeatAvailability(testShow.getId());
+        long availableAfter = afterRefund.stream()
+                .filter(s -> s.getStatus() == SeatAvailabilityResponse.Status.AVAILABLE)
+                .count();
+        assertEquals(10, availableAfter, "All 10 seats should be available after refund");
+    }
+
+    @Test
+    void refundBooking_ShouldThrow_WhenWrongUser() {
+        List<Seat> seats = seatRepository.findByScreenId(testShow.getScreenId());
+        Set<Long> seatIds = Set.of(seats.get(0).getId());
+
+        BookingResponse held = bookingService.holdSeats(
+                BookingRequest.builder().showId(testShow.getId()).seatIds(seatIds).build(),
+                userId1);
+        BookingResponse confirmed = bookingService.processPayment(held.getId(), userId1);
+
+        // Try refunding with a different user
+        assertThrows(InvalidBookingStateException.class,
+                () -> bookingService.refundBooking(confirmed.getId(), userId2));
+    }
+
+    @Test
+    void refundBooking_WithZeroRefundPolicy_ShouldSetRefundAmountToZero() {
+        // Create a show starting very soon (1 hour from now) so the 2h "No Refund" policy applies
+        List<Seat> seats = seatRepository.findByScreenId(testShow.getScreenId());
+        Set<Long> seatIds = Set.of(seats.get(0).getId());
+
+        // Override show to start very soon
+        testShow.setStartTime(LocalDateTime.now().plusHours(1));
+        testShow = showRepository.save(testShow);
+
+        BookingResponse held = bookingService.holdSeats(
+                BookingRequest.builder().showId(testShow.getId()).seatIds(seatIds).build(),
+                userId);
+        BookingResponse confirmed = bookingService.processPayment(held.getId(), userId);
+
+        // Refund — should apply the "No Refund" (0%) policy
+        BookingResponse refunded = bookingService.refundBooking(confirmed.getId(), userId);
+
+        assertEquals(BookingStatus.REFUNDED, refunded.getStatus());
+        assertEquals(BigDecimal.ZERO.setScale(2), refunded.getRefundAmount());
     }
 
     @Test

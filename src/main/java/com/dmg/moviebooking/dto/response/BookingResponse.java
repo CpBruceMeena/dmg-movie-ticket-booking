@@ -25,6 +25,8 @@ public class BookingResponse {
     private BigDecimal totalAmount;
     private LocalDateTime holdExpiresAt;
     private LocalDateTime confirmedAt;
+    private LocalDateTime refundedAt;
+    private BigDecimal refundAmount;
     private List<SeatInfo> seats;
     private LocalDateTime createdAt;
 

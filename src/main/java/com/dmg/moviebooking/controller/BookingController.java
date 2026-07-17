@@ -81,6 +81,15 @@ public class BookingController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/bookings/{bookingId}/refund")
+    @Operation(summary = "Refund a confirmed booking with refund policy lookup and seat release")
+    public ResponseEntity<BookingResponse> refundBooking(@PathVariable Long bookingId,
+                                                          Authentication authentication) {
+        Long userId = resolveUserId(authentication);
+        BookingResponse response = bookingService.refundBooking(bookingId, userId);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/bookings")
     @Operation(summary = "Get booking history for the authenticated user")
     public ResponseEntity<List<BookingResponse>> getBookingHistory(Authentication authentication) {
