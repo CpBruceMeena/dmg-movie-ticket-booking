@@ -237,7 +237,7 @@ class BookingServiceTest {
                 userId);
 
         // Process payment
-        BookingResponse confirmedBooking = bookingService.processPayment(heldBooking.getId(), userId);
+        BookingResponse confirmedBooking = bookingService.processPayment(heldBooking.getId(), userId, null);
 
         assertEquals(BookingStatus.CONFIRMED, confirmedBooking.getStatus());
         assertNotNull(confirmedBooking.getConfirmedAt());
@@ -352,7 +352,7 @@ class BookingServiceTest {
         BookingResponse held = bookingService.holdSeats(
                 BookingRequest.builder().showId(testShow.getId()).seatIds(seatIds).build(),
                 userId);
-        BookingResponse confirmed = bookingService.processPayment(held.getId(), userId);
+        BookingResponse confirmed = bookingService.processPayment(held.getId(), userId, null);
 
         assertEquals(BookingStatus.CONFIRMED, confirmed.getStatus());
         assertEquals(BigDecimal.valueOf(600), confirmed.getTotalAmount()); // 2 seats × 300
@@ -388,7 +388,7 @@ class BookingServiceTest {
         BookingResponse held = bookingService.holdSeats(
                 BookingRequest.builder().showId(testShow.getId()).seatIds(seatIds).build(),
                 userId);
-        BookingResponse confirmed = bookingService.processPayment(held.getId(), userId);
+        BookingResponse confirmed = bookingService.processPayment(held.getId(), userId, null);
 
         // Cancel first
         bookingService.refundBooking(confirmed.getId(), userId);
@@ -406,7 +406,7 @@ class BookingServiceTest {
         BookingResponse held = bookingService.holdSeats(
                 BookingRequest.builder().showId(testShow.getId()).seatIds(seatIds).build(),
                 userId);
-        BookingResponse confirmed = bookingService.processPayment(held.getId(), userId);
+        BookingResponse confirmed = bookingService.processPayment(held.getId(), userId, null);
 
         assertEquals(BookingStatus.CONFIRMED, confirmed.getStatus());
 
@@ -436,7 +436,7 @@ class BookingServiceTest {
         BookingResponse held = bookingService.holdSeats(
                 BookingRequest.builder().showId(testShow.getId()).seatIds(seatIds).build(),
                 userId1);
-        BookingResponse confirmed = bookingService.processPayment(held.getId(), userId1);
+        BookingResponse confirmed = bookingService.processPayment(held.getId(), userId1, null);
 
         // Try refunding with a different user
         assertThrows(InvalidBookingStateException.class,
@@ -456,7 +456,7 @@ class BookingServiceTest {
         BookingResponse held = bookingService.holdSeats(
                 BookingRequest.builder().showId(testShow.getId()).seatIds(seatIds).build(),
                 userId);
-        BookingResponse confirmed = bookingService.processPayment(held.getId(), userId);
+        BookingResponse confirmed = bookingService.processPayment(held.getId(), userId, null);
 
         // Refund — should apply the "No Refund" (0%) policy
         BookingResponse refunded = bookingService.refundBooking(confirmed.getId(), userId);
@@ -481,7 +481,7 @@ class BookingServiceTest {
         BookingResponse held = bookingService.holdSeats(
                 BookingRequest.builder().showId(testShow.getId()).seatIds(Set.of(seat3.getId())).build(),
                 userId2);
-        bookingService.processPayment(held.getId(), userId2);
+        bookingService.processPayment(held.getId(), userId2, null);
 
         // Check availability
         List<SeatAvailabilityResponse> availability = bookingService.getSeatAvailability(testShow.getId());

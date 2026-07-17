@@ -10,6 +10,7 @@ import com.dmg.moviebooking.exception.InvalidBookingStateException;
 import com.dmg.moviebooking.exception.PaymentTimeoutException;
 import com.dmg.moviebooking.exception.ResourceNotFoundException;
 import com.dmg.moviebooking.repository.*;
+import com.dmg.moviebooking.service.admin.DiscountCodeService;
 import com.dmg.moviebooking.service.admin.RefundPolicyService;
 import com.dmg.moviebooking.service.admin.ShowService;
 import org.springframework.cache.CacheManager;
@@ -47,6 +48,7 @@ public class BookingService {
     private final SeatHoldManager seatHoldManager;
     private final ShowService showService;
     private final RefundPolicyService refundPolicyService;
+    private final DiscountCodeService discountCodeService;
     private final NotificationService notificationService;
     private final CacheManager cacheManager;
 
@@ -79,6 +81,7 @@ public class BookingService {
                           SeatHoldManager seatHoldManager,
                           ShowService showService,
                           RefundPolicyService refundPolicyService,
+                          DiscountCodeService discountCodeService,
                           NotificationService notificationService,
                           CacheManager cacheManager) {
         this.bookingRepository = bookingRepository;
@@ -90,6 +93,7 @@ public class BookingService {
         this.seatHoldManager = seatHoldManager;
         this.showService = showService;
         this.refundPolicyService = refundPolicyService;
+        this.discountCodeService = discountCodeService;
         this.notificationService = notificationService;
         this.cacheManager = cacheManager;
     }
@@ -213,10 +217,12 @@ public class BookingService {
     }
 
     /**
-     * Process payment for a booking.
+     * Process payment for a booking, optionally applying a discount code.
+     * If the discount code is invalid, expired, or already used, the payment will be rejected.
+     * If payment succeeds, the discount code is marked as used.
      */
     @CacheEvict(value = "seats", allEntries = true)
-    public BookingResponse processPayment(Long bookingId, Long userId) {
+    public BookingResponse processPayment(Long bookingId, Long userId, String discountCode) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", bookingId));
 
@@ -241,13 +247,39 @@ public class BookingService {
                     "Payment window of " + holdDurationMinutes + " minutes has expired. Booking has been cancelled.");
         }
 
+        // Validate and apply discount code if provided
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        com.dmg.moviebooking.entity.DiscountCode appliedCode = null;
+        if (discountCode != null && !discountCode.isBlank()) {
+            appliedCode = discountCodeService.validateAndGetCode(discountCode);
+            discountAmount = appliedCode.getDiscountAmount();
+            // Ensure discount doesn't exceed total
+            if (discountAmount.compareTo(booking.getTotalAmount()) > 0) {
+                discountAmount = booking.getTotalAmount();
+            }
+            log.info("Applying discount code '{}' (₹{}) to booking {}",
+                    discountCode, discountAmount, bookingId);
+        }
+
         booking.setStatus(BookingStatus.CONFIRMED);
         booking.setConfirmedAt(LocalDateTime.now());
         booking.setHoldExpiresAt(null);
+        booking.setDiscountAmount(discountAmount);
+        if (appliedCode != null) {
+            booking.setDiscountCodeId(appliedCode.getId());
+        }
         bookingRepository.save(booking);
 
+        // Mark discount code as used after successful payment
+        if (appliedCode != null) {
+            discountCodeService.markCodeAsUsed(appliedCode.getId(), userId);
+        }
+
         Show show = getShowEntity(booking.getShowId());
-        log.info("Booking {} confirmed with payment for user id '{}'", bookingId, userId);
+
+        BigDecimal finalAmount = booking.getTotalAmount().subtract(discountAmount);
+        log.info("Booking {} confirmed with payment for user id '{}' (original: ₹{}, discount: ₹{}, final: ₹{})",
+                bookingId, userId, booking.getTotalAmount(), discountAmount, finalAmount);
 
         // Send async notification
         List<BookingSeat> bookingSeats = bookingSeatRepository.findByBookingId(bookingId);
@@ -259,7 +291,7 @@ public class BookingService {
         notificationService.notifyBookingConfirmed(
                 userId, bookingId, show.getId(), show.getMovieTitle(),
                 theaterName, screenName, show.getStartTime(),
-                bookingSeats.size(), booking.getTotalAmount());
+                bookingSeats.size(), finalAmount);
 
         return toResponse(booking, show);
     }
@@ -503,6 +535,8 @@ public class BookingService {
                 .confirmedAt(booking.getConfirmedAt())
                 .refundedAt(booking.getRefundedAt())
                 .refundAmount(booking.getRefundAmount())
+                .discountCodeId(booking.getDiscountCodeId())
+                .discountAmount(booking.getDiscountAmount())
                 .seats(seatInfos)
                 .createdAt(booking.getCreatedAt())
                 .build();
