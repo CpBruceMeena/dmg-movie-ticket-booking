@@ -8,6 +8,7 @@ import com.dmg.moviebooking.service.LoginService;
 import com.dmg.moviebooking.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/auth")
 @Tag(name = "Authentication", description = "Authentication endpoints for login, registration, and token management")
+@SecurityRequirements({}) // Public endpoints - no JWT required
 public class AuthController {
 
     private final LoginService loginService;

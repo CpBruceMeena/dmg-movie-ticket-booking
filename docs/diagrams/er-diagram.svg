@@ -1,0 +1,253 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" font-family="Segoe UI, Arial, sans-serif">
+  <defs>
+    <filter id="shadow" x="-5%" y="-5%" width="115%" height="115%">
+      <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="#00000022"/>
+    </filter>
+    <marker id="arrowOne" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto">
+      <path d="M0,0 L10,4 L0,8 L3,4 Z" fill="#64748b"/>
+    </marker>
+    <marker id="arrowMany" markerWidth="14" markerHeight="10" refX="12" refY="5" orient="auto">
+      <path d="M0,0 L14,5 L0,10 L4,5 Z" fill="#64748b"/>
+    </marker>
+    <linearGradient id="headerGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="900" fill="#f8fafc" rx="8"/>
+
+  <!-- Title -->
+  <text x="600" y="35" text-anchor="middle" font-size="20" font-weight="bold" fill="#1e293b">Database Entity Relationship Diagram</text>
+  <text x="600" y="55" text-anchor="middle" font-size="12" fill="#64748b">DMG Movie Ticket Booking System — All tables use FK ID columns (no JPA relationships)</text>
+
+  <!-- ==================== ENTITY BOXES ==================== -->
+
+  <!-- City -->
+  <g transform="translate(60, 80)" filter="url(#shadow)">
+    <rect width="160" height="100" rx="6" fill="white" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect width="160" height="28" rx="6" fill="url(#headerGrad)"/>
+    <rect y="24" width="160" height="6" fill="url(#headerGrad)"/>
+    <text x="80" y="18" text-anchor="middle" font-size="12" font-weight="bold" fill="white">cities</text>
+    <text x="10" y="46" font-size="10" fill="#64748b">PK id (BIGINT)</text>
+    <text x="10" y="62" font-size="10" fill="#475569">name VARCHAR(255) UNIQUE</text>
+    <text x="10" y="78" font-size="10" fill="#64748b">created_at, updated_at</text>
+  </g>
+
+  <!-- Theater -->
+  <g transform="translate(320, 80)" filter="url(#shadow)">
+    <rect width="180" height="115" rx="6" fill="white" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect width="180" height="28" rx="6" fill="url(#headerGrad)"/>
+    <rect y="24" width="180" height="6" fill="url(#headerGrad)"/>
+    <text x="90" y="18" text-anchor="middle" font-size="12" font-weight="bold" fill="white">theaters</text>
+    <text x="10" y="46" font-size="10" fill="#64748b">PK id (BIGINT)</text>
+    <text x="10" y="62" font-size="10" fill="#475569">name VARCHAR(100)</text>
+    <text x="10" y="78" font-size="10" fill="#475569">location VARCHAR(255)</text>
+    <text x="10" y="94" font-size="10" fill="#0ea5e9">FK city_id (BIGINT)</text>
+    <text x="10" y="108" font-size="10" fill="#64748b">created_at, updated_at</text>
+  </g>
+
+  <!-- Screen -->
+  <g transform="translate(620, 80)" filter="url(#shadow)">
+    <rect width="180" height="115" rx="6" fill="white" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect width="180" height="28" rx="6" fill="url(#headerGrad)"/>
+    <rect y="24" width="180" height="6" fill="url(#headerGrad)"/>
+    <text x="90" y="18" text-anchor="middle" font-size="12" font-weight="bold" fill="white">screens</text>
+    <text x="10" y="46" font-size="10" fill="#64748b">PK id (BIGINT)</text>
+    <text x="10" y="62" font-size="10" fill="#475569">name VARCHAR(100)</text>
+    <text x="10" y="78" font-size="10" fill="#475569">total_seats INTEGER</text>
+    <text x="10" y="94" font-size="10" fill="#0ea5e9">FK theater_id (BIGINT)</text>
+    <text x="10" y="108" font-size="10" fill="#64748b">created_at, updated_at</text>
+  </g>
+
+  <!-- Seat -->
+  <g transform="translate(940, 80)" filter="url(#shadow)">
+    <rect width="190" height="130" rx="6" fill="white" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect width="190" height="28" rx="6" fill="url(#headerGrad)"/>
+    <rect y="24" width="190" height="6" fill="url(#headerGrad)"/>
+    <text x="95" y="18" text-anchor="middle" font-size="12" font-weight="bold" fill="white">seats</text>
+    <text x="10" y="46" font-size="10" fill="#64748b">PK id (BIGINT)</text>
+    <text x="10" y="62" font-size="10" fill="#475569">row_label VARCHAR(10)</text>
+    <text x="10" y="78" font-size="10" fill="#475569">seat_number INTEGER</text>
+    <text x="10" y="94" font-size="10" fill="#475569">seat_type VARCHAR(10)</text>
+    <text x="10" y="110" font-size="10" fill="#0ea5e9">FK screen_id (BIGINT)</text>
+    <text x="10" y="124" font-size="10" fill="#64748b">created_at, updated_at</text>
+  </g>
+
+  <!-- Show -->
+  <g transform="translate(60, 310)" filter="url(#shadow)">
+    <rect width="210" height="145" rx="6" fill="white" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect width="210" height="28" rx="6" fill="url(#headerGrad)"/>
+    <rect y="24" width="210" height="6" fill="url(#headerGrad)"/>
+    <text x="105" y="18" text-anchor="middle" font-size="12" font-weight="bold" fill="white">shows</text>
+    <text x="10" y="46" font-size="10" fill="#64748b">PK id (BIGINT)</text>
+    <text x="10" y="62" font-size="10" fill="#475569">movie_title VARCHAR(255)</text>
+    <text x="10" y="78" font-size="10" fill="#475569">start_time DATETIME</text>
+    <text x="10" y="94" font-size="10" fill="#475569">end_time DATETIME</text>
+    <text x="10" y="110" font-size="10" fill="#475569">base_price DECIMAL(10,2)</text>
+    <text x="10" y="126" font-size="10" fill="#0ea5e9">FK screen_id (BIGINT)</text>
+    <text x="10" y="142" font-size="10" fill="#64748b">created_at, updated_at</text>
+  </g>
+
+  <!-- User -->
+  <g transform="translate(400, 310)" filter="url(#shadow)">
+    <rect width="200" height="145" rx="6" fill="white" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect width="200" height="28" rx="6" fill="url(#headerGrad)"/>
+    <rect y="24" width="200" height="6" fill="url(#headerGrad)"/>
+    <text x="100" y="18" text-anchor="middle" font-size="12" font-weight="bold" fill="white">users</text>
+    <text x="10" y="46" font-size="10" fill="#64748b">PK id (BIGINT)</text>
+    <text x="10" y="62" font-size="10" fill="#475569">username VARCHAR(50) UNIQUE</text>
+    <text x="10" y="78" font-size="10" fill="#475569">email VARCHAR(100) UNIQUE</text>
+    <text x="10" y="94" font-size="10" fill="#475569">password VARCHAR(255)</text>
+    <text x="10" y="110" font-size="10" fill="#475569">full_name VARCHAR(100)</text>
+    <text x="10" y="126" font-size="10" fill="#475569">role VARCHAR(20)</text>
+    <text x="10" y="142" font-size="10" fill="#64748b">created_at, updated_at</text>
+  </g>
+
+  <!-- Booking -->
+  <g transform="translate(730, 310)" filter="url(#shadow)">
+    <rect width="230" height="175" rx="6" fill="white" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect width="230" height="28" rx="6" fill="url(#headerGrad)"/>
+    <rect y="24" width="230" height="6" fill="url(#headerGrad)"/>
+    <text x="115" y="18" text-anchor="middle" font-size="12" font-weight="bold" fill="white">bookings</text>
+    <text x="10" y="46" font-size="10" fill="#64748b">PK id (BIGINT)</text>
+    <text x="10" y="62" font-size="10" fill="#0ea5e9">FK user_id (BIGINT)</text>
+    <text x="10" y="78" font-size="10" fill="#0ea5e9">FK show_id (BIGINT)</text>
+    <text x="10" y="94" font-size="10" fill="#475569">status VARCHAR(20)</text>
+    <text x="10" y="110" font-size="10" fill="#475569">total_amount DECIMAL(10,2)</text>
+    <text x="10" y="126" font-size="10" fill="#475569">hold_expires_at DATETIME</text>
+    <text x="10" y="142" font-size="10" fill="#475569">version INTEGER (Optimistic Lock)</text>
+    <text x="10" y="158" font-size="10" fill="#0ea5e9">FK discount_code_id (BIGINT)</text>
+    <text x="10" y="174" font-size="10" fill="#64748b">created_at, updated_at</text>
+  </g>
+
+  <!-- BookingSeat -->
+  <g transform="translate(60, 560)" filter="url(#shadow)">
+    <rect width="190" height="115" rx="6" fill="white" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect width="190" height="28" rx="6" fill="url(#headerGrad)"/>
+    <rect y="24" width="190" height="6" fill="url(#headerGrad)"/>
+    <text x="95" y="18" text-anchor="middle" font-size="12" font-weight="bold" fill="white">booking_seats</text>
+    <text x="10" y="46" font-size="10" fill="#64748b">PK id (BIGINT)</text>
+    <text x="10" y="62" font-size="10" fill="#0ea5e9">FK booking_id (BIGINT)</text>
+    <text x="10" y="78" font-size="10" fill="#0ea5e9">FK seat_id (BIGINT)</text>
+    <text x="10" y="94" font-size="10" fill="#475569">price DECIMAL(10,2)</text>
+    <text x="10" y="108" font-size="10" fill="#64748b">created_at, updated_at</text>
+  </g>
+
+  <!-- PricingTier -->
+  <g transform="translate(380, 560)" filter="url(#shadow)">
+    <rect width="200" height="130" rx="6" fill="white" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect width="200" height="28" rx="6" fill="url(#headerGrad)"/>
+    <rect y="24" width="200" height="6" fill="url(#headerGrad)"/>
+    <text x="100" y="18" text-anchor="middle" font-size="12" font-weight="bold" fill="white">pricing_tiers</text>
+    <text x="10" y="46" font-size="10" fill="#64748b">PK id (BIGINT)</text>
+    <text x="10" y="62" font-size="10" fill="#475569">name VARCHAR(255) UNIQUE</text>
+    <text x="10" y="78" font-size="10" fill="#475569">seat_type VARCHAR(10)</text>
+    <text x="10" y="94" font-size="10" fill="#475569">weekday_price DECIMAL(10,2)</text>
+    <text x="10" y="110" font-size="10" fill="#475569">weekend_price DECIMAL(10,2)</text>
+    <text x="10" y="126" font-size="10" fill="#64748b">created_at, updated_at</text>
+  </g>
+
+  <!-- ShowPricingTier -->
+  <g transform="translate(700, 560)" filter="url(#shadow)">
+    <rect width="200" height="100" rx="6" fill="white" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect width="200" height="28" rx="6" fill="url(#headerGrad)"/>
+    <rect y="24" width="200" height="6" fill="url(#headerGrad)"/>
+    <text x="100" y="18" text-anchor="middle" font-size="12" font-weight="bold" fill="white">show_pricing_tiers</text>
+    <text x="10" y="46" font-size="10" fill="#64748b">PK id (BIGINT)</text>
+    <text x="10" y="62" font-size="10" fill="#0ea5e9">FK show_id (BIGINT)</text>
+    <text x="10" y="78" font-size="10" fill="#0ea5e9">FK pricing_tier_id (BIGINT)</text>
+    <text x="10" y="94" font-size="10" fill="#64748b">created_at, updated_at</text>
+  </g>
+
+  <!-- DiscountCode -->
+  <g transform="translate(55, 760)" filter="url(#shadow)">
+    <rect width="200" height="130" rx="6" fill="white" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect width="200" height="28" rx="6" fill="url(#headerGrad)"/>
+    <rect y="24" width="200" height="6" fill="url(#headerGrad)"/>
+    <text x="100" y="18" text-anchor="middle" font-size="12" font-weight="bold" fill="white">discount_codes</text>
+    <text x="10" y="46" font-size="10" fill="#64748b">PK id (BIGINT)</text>
+    <text x="10" y="62" font-size="10" fill="#475569">code VARCHAR(50) UNIQUE</text>
+    <text x="10" y="78" font-size="10" fill="#475569">discount_amount DECIMAL(10,2)</text>
+    <text x="10" y="94" font-size="10" fill="#475569">active BOOLEAN</text>
+    <text x="10" y="110" font-size="10" fill="#475569">used BOOLEAN</text>
+    <text x="10" y="126" font-size="10" fill="#64748b">created_at, updated_at</text>
+  </g>
+
+  <!-- RefundPolicy -->
+  <g transform="translate(380, 760)" filter="url(#shadow)">
+    <rect width="200" height="115" rx="6" fill="white" stroke="#cbd5e1" stroke-width="1.5"/>
+    <rect width="200" height="28" rx="6" fill="url(#headerGrad)"/>
+    <rect y="24" width="200" height="6" fill="url(#headerGrad)"/>
+    <text x="100" y="18" text-anchor="middle" font-size="12" font-weight="bold" fill="white">refund_policies</text>
+    <text x="10" y="46" font-size="10" fill="#64748b">PK id (BIGINT)</text>
+    <text x="10" y="62" font-size="10" fill="#475569">name VARCHAR(255) UNIQUE</text>
+    <text x="10" y="78" font-size="10" fill="#475569">hours_before_show INTEGER</text>
+    <text x="10" y="94" font-size="10" fill="#475569">refund_percentage INTEGER</text>
+    <text x="10" y="108" font-size="10" fill="#64748b">created_at, updated_at</text>
+  </g>
+
+  <!-- ==================== RELATIONSHIP LINES ==================== -->
+
+  <!-- City -> Theater (1 to many) -->
+  <line x1="220" y1="130" x2="315" y2="130" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="268" y="125" text-anchor="middle" font-size="9" fill="#64748b">city_id</text>
+  <text x="268" y="140" text-anchor="middle" font-size="9" fill="#0ea5e9">1 ─── *</text>
+
+  <!-- Theater -> Screen (1 to many) -->
+  <line x1="500" y1="130" x2="615" y2="130" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="558" y="125" text-anchor="middle" font-size="9" fill="#64748b">theater_id</text>
+  <text x="558" y="140" text-anchor="middle" font-size="9" fill="#0ea5e9">1 ─── *</text>
+
+  <!-- Screen -> Seat (1 to many) -->
+  <line x1="800" y1="130" x2="935" y2="130" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="868" y="125" text-anchor="middle" font-size="9" fill="#64748b">screen_id</text>
+  <text x="868" y="140" text-anchor="middle" font-size="9" fill="#0ea5e9">1 ─── *</text>
+
+  <!-- Screen -> Show (1 to many) -->
+  <line x1="720" y1="195" x2="165" y2="305" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="443" y="238" text-anchor="middle" font-size="9" fill="#64748b">screen_id</text>
+  <text x="443" y="252" text-anchor="middle" font-size="9" fill="#0ea5e9">1 ─── *</text>
+
+  <!-- Booking -> BookingSeat (1 to many) -->
+  <line x1="845" y1="485" x2="250" y2="555" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="548" y="510" text-anchor="middle" font-size="9" fill="#64748b">booking_id</text>
+  <text x="548" y="524" text-anchor="middle" font-size="9" fill="#0ea5e9">1 ─── *</text>
+
+  <!-- User -> Booking (1 to many) -->
+  <line x1="500" y1="455" x2="845" y2="455" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="673" y="450" text-anchor="middle" font-size="9" fill="#64748b">user_id</text>
+  <text x="673" y="465" text-anchor="middle" font-size="9" fill="#0ea5e9">1 ─── *</text>
+
+  <!-- Show -> Booking (1 to many) -->
+  <line x1="270" y1="380" x2="725" y2="380" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="498" y="375" text-anchor="middle" font-size="9" fill="#64748b">show_id</text>
+  <text x="498" y="390" text-anchor="middle" font-size="9" fill="#0ea5e9">1 ─── *</text>
+
+  <!-- Seat -> BookingSeat (1 to many) -->
+  <line x1="1035" y1="210" x2="250" y2="610" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="650" y="402" text-anchor="middle" font-size="9" fill="#64748b">seat_id</text>
+  <text x="650" y="416" text-anchor="middle" font-size="9" fill="#0ea5e9">1 ─── *</text>
+
+  <!-- DiscountCode -> Booking (1 to many) -->
+  <line x1="155" y1="760" x2="845" y2="485" stroke="#64748b" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <text x="550" y="660" text-anchor="middle" font-size="9" fill="#64748b">discount_code_id</text>
+  <text x="550" y="674" text-anchor="middle" font-size="9" fill="#0ea5e9">1 ─── *</text>
+
+  <!-- Legend -->
+  <g transform="translate(700, 760)">
+    <rect width="440" height="130" rx="6" fill="white" stroke="#e2e8f0" stroke-width="1"/>
+    <text x="220" y="20" text-anchor="middle" font-size="12" font-weight="bold" fill="#1e293b">Legend</text>
+    <rect x="15" y="32" width="12" height="12" rx="2" fill="#0ea5e9"/>
+    <text x="33" y="43" font-size="10" fill="#475569">Foreign Key (FK) column references PK of related table</text>
+    <rect x="15" y="52" width="12" height="12" rx="2" fill="#64748b"/>
+    <text x="33" y="63" font-size="10" fill="#475569">Primary Key (PK) column</text>
+    <rect x="15" y="72" width="12" height="12" rx="2" fill="#475569"/>
+    <text x="33" y="83" font-size="10" fill="#475569">Regular data column</text>
+    <text x="15" y="105" font-size="10" fill="#0ea5e9">1 ─── *</text>
+    <text x="50" y="105" font-size="10" fill="#475569">One-to-Many relationship (via FK)</text>
+    <text x="15" y="122" font-size="10" fill="#64748b">Entities use FK ID directly (no JPA @ManyToOne)</text>
+  </g>
+
+</svg>
