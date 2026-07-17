@@ -37,7 +37,7 @@ public class BookingController {
     // ==================== Public Endpoints ====================
 
     @GetMapping("/shows")
-    @Operation(summary = "Browse all shows (public)")
+    @Operation(summary = "Browse all shows (requires JWT - accessible by ADMIN or CUSTOMER)")
     public ResponseEntity<List<ShowResponse>> browseShows(
             @RequestParam(required = false) Long theaterId) {
         if (theaterId != null) {
@@ -47,7 +47,7 @@ public class BookingController {
     }
 
     @GetMapping("/shows/{showId}/seats")
-    @Operation(summary = "Get seat availability for a show (public)")
+    @Operation(summary = "Get seat availability for a show (requires JWT - accessible by ADMIN or CUSTOMER)")
     public ResponseEntity<List<SeatAvailabilityResponse>> getSeatAvailability(@PathVariable Long showId) {
         return ResponseEntity.ok(bookingService.getSeatAvailability(showId));
     }

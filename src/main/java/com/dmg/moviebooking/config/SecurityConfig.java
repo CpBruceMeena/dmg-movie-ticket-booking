@@ -38,17 +38,17 @@ public class SecurityConfig {
                         // Public endpoints (no auth required)
                         .requestMatchers("/api/health").permitAll()
                         .requestMatchers("/api/auth/login", "/api/auth/register").permitAll()
-                        .requestMatchers("/api/shows", "/api/shows/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/h2-console/**").permitAll()
 
-                        // Admin-only endpoints
+                        // Admin-only endpoints (ADMIN role required)
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
 
-                        // Customer endpoints (authenticated)
+                        // Customer endpoints (accessible by both ADMIN and CUSTOMER)
+                        .requestMatchers("/api/shows", "/api/shows/**").hasAnyRole("ADMIN", "CUSTOMER")
                         .requestMatchers("/api/cities", "/api/theaters").hasAnyRole("ADMIN", "CUSTOMER")
                         .requestMatchers("/api/bookings/**").hasAnyRole("ADMIN", "CUSTOMER")
 
-                        // Catch-all: require authentication
+                        // Catch-all: require authentication (any valid JWT)
                         .anyRequest().authenticated()
                 )
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
