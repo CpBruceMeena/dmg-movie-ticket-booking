@@ -37,7 +37,6 @@ Key characteristics:
 | **Authentication** | JWT Bearer Tokens (RSA-256 signed) |
 | **Authorization** | Role-based (ADMIN / CUSTOMER) |
 | **Database** | PostgreSQL (production) / H2 (development) |
-| **Database Migrations** | Flyway V1 (PostgreSQL profile only) |
 | **Caching** | Spring `@Cacheable` for frequently accessed data |
 | **Seat Hold Management** | Redis (distributed) or In-Memory (dev/test) |
 | **Concurrency** | Atomic seat holds + Optimistic locking (`@Version`) |
@@ -57,7 +56,6 @@ Key characteristics:
 | PostgreSQL | 15+ | Primary database |
 | H2 Database | — | In-memory development database |
 | Redis | 7+ | Distributed seat hold management |
-| Flyway | — | Database migrations (PostgreSQL) |
 | Lombok | — | Boilerplate reduction |
 | SpringDoc OpenAPI | 2.3.0 | API documentation (Swagger UI) |
 | JWT (jjwt) | 0.12.x | JSON Web Token generation & validation |
@@ -135,7 +133,6 @@ Spring Data JPA repositories providing CRUD and custom query methods.
 | **Caching** | `@Cacheable` on repositories/services |
 | **Async Processing** | `@Async` for notifications |
 | **Exception Handling** | `@ControllerAdvice` global handler |
-| **Database Migrations** | Flyway V1 (PostgreSQL) |
 | **API Documentation** | SpringDoc OpenAPI (Swagger UI at `/swagger-ui/index.html`) |
 
 ---

@@ -279,14 +279,14 @@
       <text x="10" y="40" font-size="9" fill="#6d28d9">• Rate Limiting (sliding window)</text>
       <text x="10" y="55" font-size="9" fill="#6d28d9">• Caching (Spring @Cacheable)</text>
       <text x="10" y="70" font-size="9" fill="#6d28d9">• Async Notifications (@Async)</text>
-      <text x="10" y="85" font-size="9" fill="#6d28d9">• Flyway DB Migrations</text>
+      <text x="10" y="85" font-size="9" fill="#6d28d9">• DB Schema via scripts/db/setup.sql</text>
     </g>
   </g>
 
-  <!-- Flyway mention -->
+  <!-- DB Schema -->
   <g transform="translate(700, 710)">
     <rect width="340" height="50" rx="6" fill="#ecfdf5" stroke="#6ee7b7" stroke-width="1"/>
-    <text x="170" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#065f46">Database Migrations</text>
-    <text x="10" y="40" font-size="9" fill="#047857">• Flyway V1 migration with final schema (PostgreSQL)</text>
+    <text x="170" y="20" text-anchor="middle" font-size="11" font-weight="bold" fill="#065f46">Database Schema</text>
+    <text x="10" y="40" font-size="9" fill="#047857">• View scripts/db/setup.sql for complete schema</text>
   </g>
 </svg>

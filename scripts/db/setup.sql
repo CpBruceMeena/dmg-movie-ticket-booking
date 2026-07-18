@@ -1,12 +1,12 @@
 -- ============================================================================
--- V1: Initial Schema
--- Description: Creates all tables for the DMG Movie Ticket Booking system.
---              This single migration represents the complete schema including
---              the movie management feature (movies table, shows.movie_id FK).
+-- DMG Movie Ticket Booking — Database Setup Script
+-- ============================================================================
+-- Run this script directly on your PostgreSQL server to create all tables.
+-- Usage: psql -U <username> -d <database> -f scripts/db/setup.sql
 -- ============================================================================
 
 -- Users table
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id              BIGSERIAL       PRIMARY KEY,
     username        VARCHAR(50)     NOT NULL UNIQUE,
     email           VARCHAR(100)    NOT NULL UNIQUE,
@@ -19,7 +19,7 @@ CREATE TABLE users (
 );
 
 -- Cities table
-CREATE TABLE cities (
+CREATE TABLE IF NOT EXISTS cities (
     id              BIGSERIAL       PRIMARY KEY,
     name            VARCHAR(255)    NOT NULL UNIQUE,
     created_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -27,7 +27,7 @@ CREATE TABLE cities (
 );
 
 -- Theaters table
-CREATE TABLE theaters (
+CREATE TABLE IF NOT EXISTS theaters (
     id              BIGSERIAL       PRIMARY KEY,
     name            VARCHAR(255)    NOT NULL,
     location        VARCHAR(255)    NOT NULL,
@@ -37,7 +37,7 @@ CREATE TABLE theaters (
 );
 
 -- Screens table
-CREATE TABLE screens (
+CREATE TABLE IF NOT EXISTS screens (
     id              BIGSERIAL       PRIMARY KEY,
     name            VARCHAR(255)    NOT NULL,
     total_seats     INTEGER         NOT NULL,
@@ -47,7 +47,7 @@ CREATE TABLE screens (
 );
 
 -- Seats table
-CREATE TABLE seats (
+CREATE TABLE IF NOT EXISTS seats (
     id              BIGSERIAL       PRIMARY KEY,
     row_label       VARCHAR(10)     NOT NULL,
     seat_number     INTEGER         NOT NULL,
@@ -57,8 +57,12 @@ CREATE TABLE seats (
     updated_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- ============================================================================
 -- Movies table (standalone movie management)
-CREATE TABLE movies (
+-- Added in the movie management feature. If your DB was created before this
+-- feature was added, run the CREATE TABLE below.
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS movies (
     id               BIGSERIAL       PRIMARY KEY,
     title            VARCHAR(255)    NOT NULL,
     description      TEXT,
@@ -71,8 +75,10 @@ CREATE TABLE movies (
     updated_at       TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- ============================================================================
 -- Shows table (references movies via movie_id FK)
-CREATE TABLE shows (
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS shows (
     id              BIGSERIAL       PRIMARY KEY,
     movie_id        BIGINT          NOT NULL REFERENCES movies(id),
     start_time      TIMESTAMP       NOT NULL,
@@ -84,7 +90,7 @@ CREATE TABLE shows (
 );
 
 -- Pricing Tiers table
-CREATE TABLE pricing_tiers (
+CREATE TABLE IF NOT EXISTS pricing_tiers (
     id              BIGSERIAL       PRIMARY KEY,
     name            VARCHAR(255)    NOT NULL UNIQUE,
     seat_type       VARCHAR(20)     NOT NULL,
@@ -95,7 +101,7 @@ CREATE TABLE pricing_tiers (
 );
 
 -- Show-Pricing Tier join table
-CREATE TABLE show_pricing_tiers (
+CREATE TABLE IF NOT EXISTS show_pricing_tiers (
     id              BIGSERIAL       PRIMARY KEY,
     show_id         BIGINT          NOT NULL REFERENCES shows(id),
     pricing_tier_id BIGINT          NOT NULL REFERENCES pricing_tiers(id),
@@ -104,7 +110,7 @@ CREATE TABLE show_pricing_tiers (
 );
 
 -- Bookings table
-CREATE TABLE bookings (
+CREATE TABLE IF NOT EXISTS bookings (
     id              BIGSERIAL       PRIMARY KEY,
     user_id         BIGINT          NOT NULL REFERENCES users(id),
     show_id         BIGINT          NOT NULL REFERENCES shows(id),
@@ -123,7 +129,7 @@ CREATE TABLE bookings (
 );
 
 -- Booking-Seats join table
-CREATE TABLE booking_seats (
+CREATE TABLE IF NOT EXISTS booking_seats (
     id              BIGSERIAL       PRIMARY KEY,
     booking_id      BIGINT          NOT NULL REFERENCES bookings(id),
     seat_id         BIGINT          NOT NULL REFERENCES seats(id),
@@ -133,7 +139,7 @@ CREATE TABLE booking_seats (
 );
 
 -- Refund Policies table
-CREATE TABLE refund_policies (
+CREATE TABLE IF NOT EXISTS refund_policies (
     id                  BIGSERIAL       PRIMARY KEY,
     name                VARCHAR(255)    NOT NULL UNIQUE,
     hours_before_show   INTEGER         NOT NULL,
@@ -143,7 +149,7 @@ CREATE TABLE refund_policies (
 );
 
 -- Discount Codes table
-CREATE TABLE discount_codes (
+CREATE TABLE IF NOT EXISTS discount_codes (
     id              BIGSERIAL       PRIMARY KEY,
     code            VARCHAR(50)     NOT NULL UNIQUE,
     discount_amount NUMERIC(10,2)   NOT NULL,
@@ -160,20 +166,19 @@ CREATE TABLE discount_codes (
 -- ========================
 -- Indexes for performance
 -- ========================
-
-CREATE INDEX idx_theaters_city_id ON theaters(city_id);
-CREATE INDEX idx_screens_theater_id ON screens(theater_id);
-CREATE INDEX idx_seats_screen_id ON seats(screen_id);
-CREATE INDEX idx_movies_title ON movies(title);
-CREATE INDEX idx_shows_screen_id ON shows(screen_id);
-CREATE INDEX idx_shows_movie_id ON shows(movie_id);
-CREATE INDEX idx_shows_start_time ON shows(start_time);
-CREATE INDEX idx_show_pricing_tiers_show_id ON show_pricing_tiers(show_id);
-CREATE INDEX idx_show_pricing_tiers_pricing_tier_id ON show_pricing_tiers(pricing_tier_id);
-CREATE INDEX idx_bookings_user_id ON bookings(user_id);
-CREATE INDEX idx_bookings_show_id ON bookings(show_id);
-CREATE INDEX idx_bookings_status ON bookings(status);
-CREATE INDEX idx_bookings_hold_expires_at ON bookings(hold_expires_at);
-CREATE INDEX idx_booking_seats_booking_id ON booking_seats(booking_id);
-CREATE INDEX idx_booking_seats_seat_id ON booking_seats(seat_id);
-CREATE INDEX idx_discount_codes_code ON discount_codes(code);
+CREATE INDEX IF NOT EXISTS idx_theaters_city_id ON theaters(city_id);
+CREATE INDEX IF NOT EXISTS idx_screens_theater_id ON screens(theater_id);
+CREATE INDEX IF NOT EXISTS idx_seats_screen_id ON seats(screen_id);
+CREATE INDEX IF NOT EXISTS idx_movies_title ON movies(title);
+CREATE INDEX IF NOT EXISTS idx_shows_screen_id ON shows(screen_id);
+CREATE INDEX IF NOT EXISTS idx_shows_movie_id ON shows(movie_id);
+CREATE INDEX IF NOT EXISTS idx_shows_start_time ON shows(start_time);
+CREATE INDEX IF NOT EXISTS idx_show_pricing_tiers_show_id ON show_pricing_tiers(show_id);
+CREATE INDEX IF NOT EXISTS idx_show_pricing_tiers_pricing_tier_id ON show_pricing_tiers(pricing_tier_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_user_id ON bookings(user_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_show_id ON bookings(show_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
+CREATE INDEX IF NOT EXISTS idx_bookings_hold_expires_at ON bookings(hold_expires_at);
+CREATE INDEX IF NOT EXISTS idx_booking_seats_booking_id ON booking_seats(booking_id);
+CREATE INDEX IF NOT EXISTS idx_booking_seats_seat_id ON booking_seats(seat_id);
+CREATE INDEX IF NOT EXISTS idx_discount_codes_code ON discount_codes(code);

@@ -56,11 +56,6 @@ public class Booking {
     @Column(name = "discount_amount", precision = 10, scale = 2)
     private BigDecimal discountAmount;
 
-    @Version
-    @Column(nullable = false)
-    @Builder.Default
-    private Integer version = 0;
-
     @CreationTimestamp
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
