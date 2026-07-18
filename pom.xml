@@ -102,12 +102,6 @@
             <version>2.3.0</version>
         </dependency>
 
-        <!-- Database Migrations (Flyway) -->
-        <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
-        </dependency>
-
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

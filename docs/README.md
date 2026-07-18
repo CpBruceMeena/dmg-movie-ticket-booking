@@ -43,6 +43,5 @@ You can also:
 | ORM | Spring Data JPA / Hibernate |
 | Auth | JWT with Spring Security |
 | API Docs | SpringDoc OpenAPI / Swagger UI |
-| DB Migrations | Flyway (PostgreSQL) |
 | Caching | In-memory (ConcurrentHashMap) |
 | Rate Limiting | Sliding Window Algorithm |
